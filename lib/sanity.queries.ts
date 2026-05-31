@@ -53,6 +53,14 @@ export interface SiteSettings {
   seoDescription: string | null
   ogImage: SanityImageSource | null
   accentColor: string | null
+  heroBgImage: SanityImageSource | null
+  heroBgImageLqip: string | null
+  heroLayout: 'minimal' | 'fullscreen' | 'split' | null
+  showAboutPreview: boolean | null
+  workGridCols: 2 | 3 | 4 | null
+  cardStyle: 'below' | 'overlay' | null
+  colorScheme: 'dark' | 'light' | null
+  fontFamily: 'geist' | 'playfair' | 'dm-sans' | null
 }
 
 // ─── GROQ Queries ─────────────────────────────────────────────────────────────
@@ -85,7 +93,15 @@ export const siteSettingsQuery = /* groq */ `
     seoTitle,
     seoDescription,
     ogImage,
-    accentColor
+    accentColor,
+    heroBgImage,
+    "heroBgImageLqip": heroBgImage.asset->metadata.lqip,
+    heroLayout,
+    showAboutPreview,
+    workGridCols,
+    cardStyle,
+    colorScheme,
+    fontFamily
   }
 `
 
