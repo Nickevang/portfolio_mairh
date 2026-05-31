@@ -39,6 +39,34 @@ export const siteSettings = defineType({
       of: [{type: 'reference', to: [{type: 'project'}]}],
       description: 'Hand-pick projects to show on the homepage. Leave empty to show all latest.',
     }),
+    defineField({
+      name: 'heroBgImage',
+      title: 'Hero Background Image',
+      type: 'image',
+      options: {hotspot: true},
+      description: 'Full-width background photo behind the hero text.',
+    }),
+    defineField({
+      name: 'heroLayout',
+      title: 'Hero Layout',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Minimal — text only', value: 'minimal'},
+          {title: 'Fullscreen — image fills viewport height', value: 'fullscreen'},
+          {title: 'Split — image left, text right', value: 'split'},
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'minimal',
+    }),
+    defineField({
+      name: 'showAboutPreview',
+      title: 'Show About Preview on Homepage',
+      type: 'boolean',
+      description: 'Adds a bio teaser section below the project grid.',
+      initialValue: false,
+    }),
 
     // ─── About ──────────────────────────────────────────────────────────────
     defineField({
@@ -128,12 +156,67 @@ export const siteSettings = defineType({
       description: 'Share image used when the site is linked on social media.',
     }),
 
+    // ─── Work / Cards ───────────────────────────────────────────────────────
+    defineField({
+      name: 'workGridCols',
+      title: 'Work Grid Columns',
+      type: 'number',
+      options: {
+        list: [
+          {title: '2 columns', value: 2},
+          {title: '3 columns', value: 3},
+          {title: '4 columns', value: 4},
+        ],
+      },
+      initialValue: 3,
+    }),
+    defineField({
+      name: 'cardStyle',
+      title: 'Project Card Style',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Title below image', value: 'below'},
+          {title: 'Title on hover overlay', value: 'overlay'},
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'below',
+    }),
+
     // ─── Theme ──────────────────────────────────────────────────────────────
     defineField({
       name: 'accentColor',
       title: 'Accent Color',
       type: 'string',
       description: 'Hex color code for link highlights and hover states, e.g. #e5e5e5.',
+    }),
+    defineField({
+      name: 'colorScheme',
+      title: 'Color Scheme',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Dark', value: 'dark'},
+          {title: 'Light', value: 'light'},
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'dark',
+    }),
+    defineField({
+      name: 'fontFamily',
+      title: 'Font',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Geist — Modern sans-serif (default)', value: 'geist'},
+          {title: 'Playfair Display — Editorial serif', value: 'playfair'},
+          {title: 'DM Sans — Clean humanist', value: 'dm-sans'},
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'geist',
     }),
   ],
   preview: {

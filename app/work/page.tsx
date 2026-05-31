@@ -1,10 +1,16 @@
 import {ProjectCard} from '@/components/project-card'
 import {sanityFetch, sanityDataset, sanityProjectId} from '@/lib/sanity.client'
 import {urlForImage} from '@/lib/sanity.image'
-import {projectsQuery, type ProjectListItem} from '@/lib/sanity.queries'
+import {siteSettingsQuery, projectsQuery, type SiteSettings, type ProjectListItem} from '@/lib/sanity.queries'
 
 export const metadata = {
   title: 'Work',
+}
+
+const GRID_COLS: Record<number, string> = {
+  2: 'sm:grid-cols-2',
+  3: 'sm:grid-cols-3',
+  4: 'sm:grid-cols-2 lg:grid-cols-4',
 }
 
 export default async function WorkPage() {
@@ -19,7 +25,10 @@ export default async function WorkPage() {
     )
   }
 
-  const projects = await sanityFetch<ProjectListItem[]>(projectsQuery)
+  const [settings, projects] = await Promise.all([
+    sanityFetch<SiteSettings>(siteSettingsQuery),
+    sanityFetch<ProjectListItem[]>(projectsQuery),
+  ])
 
   const cards = projects
     .filter((p) => Boolean(p.slug) && Boolean(p.coverImage))
@@ -31,6 +40,9 @@ export default async function WorkPage() {
       coverImageUrl: urlForImage(p.coverImage).width(900).height(1125).fit('crop').url(),
       lqip: p.lqip ?? undefined,
     }))
+
+  const cardStyle = settings?.cardStyle ?? 'below'
+  const colsClass = GRID_COLS[settings?.workGridCols ?? 4] ?? GRID_COLS[4]
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10">
@@ -46,9 +58,9 @@ export default async function WorkPage() {
           No projects yet. Add a <span className="text-white/80">Project</span> in the Studio.
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className={`grid grid-cols-2 gap-4 ${colsClass}`}>
           {cards.map((p) => (
-            <ProjectCard key={p._id} project={p} />
+            <ProjectCard key={p._id} project={p} cardStyle={cardStyle} />
           ))}
         </div>
       )}

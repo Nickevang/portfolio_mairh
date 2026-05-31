@@ -29,8 +29,9 @@ export function Navbar({siteName}: {siteName?: string | null}) {
                 href={l.href}
                 className={clsx(
                   'text-sm tracking-wide transition-colors',
-                  isActive ? 'text-white' : 'text-white/60 hover:text-white/90',
+                  isActive ? '' : 'text-white/60 hover:text-white/90',
                 )}
+              style={isActive ? {color: 'var(--accent)'} : undefined}
               >
                 {l.label}
               </Link>

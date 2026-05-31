@@ -59,7 +59,8 @@ export default async function AboutPage() {
                 {settings.disciplines.map((d) => (
                   <li
                     key={d}
-                    className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/60"
+                    className="rounded-full px-3 py-1 text-xs text-white/60"
+                    style={{border: '1px solid', borderColor: 'color-mix(in srgb, var(--accent) 30%, transparent)'}}
                   >
                     {d}
                   </li>
@@ -71,7 +72,11 @@ export default async function AboutPage() {
           <div className="mt-10">
             <Link
               href="/contact"
-              className="inline-block rounded-full border border-white/20 px-5 py-2 text-sm text-white/80 transition-colors hover:border-white/50 hover:text-white"
+              className="inline-block rounded-full px-5 py-2 text-sm transition-opacity hover:opacity-70"
+              style={{
+                border: '1px solid color-mix(in srgb, var(--accent) 50%, transparent)',
+                color: 'var(--accent)',
+              }}
             >
               Get in touch
             </Link>
