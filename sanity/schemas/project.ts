@@ -19,6 +19,12 @@ export const project = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: 'tagline',
+      title: 'Slideshow Caption',
+      type: 'string',
+      description: 'Short text shown under the title in the homepage slideshow (optional).',
+    }),
+    defineField({
       name: 'coverImage',
       title: 'Cover Image',
       type: 'image',

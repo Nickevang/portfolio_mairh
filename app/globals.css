@@ -21,3 +21,20 @@ body {
 ::selection {
   background: rgba(255, 255, 255, 0.16);
 }
+
+@keyframes slide-enter-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes slide-enter-left {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes slide-exit-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+@keyframes slide-exit-right {
+  from { transform: translateX(0); }
+  to   { transform: translateX(100%); }
+}

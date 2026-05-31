@@ -6,6 +6,7 @@ export interface ProjectListItem {
   _id: string
   title: string
   slug: string
+  tagline: string | null
   mediaType: 'photo' | 'video'
   coverImage: SanityImageSource
   lqip: string | null
@@ -78,6 +79,7 @@ export const siteSettingsQuery = /* groq */ `
       _id,
       title,
       "slug": slug.current,
+      tagline,
       mediaType,
       coverImage,
       "lqip": coverImage.asset->metadata.lqip
@@ -113,6 +115,7 @@ export const projectsQuery = /* groq */ `
     _id,
     title,
     "slug": slug.current,
+    tagline,
     mediaType,
     coverImage,
     "lqip": coverImage.asset->metadata.lqip
