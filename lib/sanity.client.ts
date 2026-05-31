@@ -23,6 +23,6 @@ export function getSanityClient() {
 export async function sanityFetch<T>(query: string, params: Record<string, unknown> = {}) {
   const client = getSanityClient()
   if (!client) return [] as T
-  return client.fetch<T>(query, params)
+  return client.fetch<T>(query, params, { next: { revalidate: 60 } })
 }
 
