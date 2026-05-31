@@ -125,7 +125,7 @@ export const projectBySlugQuery = /* groq */ `
     coverImage,
     "lqip": coverImage.asset->metadata.lqip,
     "muxPlaybackId": video.asset->data.playback_ids[0].id,
-    gallery[] {
+    gallery[defined(asset._ref)] {
       ...,
       "lqip": asset->metadata.lqip
     },

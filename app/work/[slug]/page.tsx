@@ -79,7 +79,7 @@ export default async function ProjectPage({params}: Props) {
           {/* Gallery grid */}
           {project.gallery && project.gallery.length > 0 && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {project.gallery.map((img, i) => (
+              {project.gallery.filter((img) => img.asset).map((img, i) => (
                 <div
                   key={img._key ?? i}
                   className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-white/10"
