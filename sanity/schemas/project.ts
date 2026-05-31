@@ -58,6 +58,19 @@ export const project = defineType({
       ],
       hidden: ({document}) => document?.mediaType !== 'photo',
     }),
+    defineField({
+      name: 'description',
+      title: 'Description',
+      type: 'array',
+      of: [{type: 'block'}],
+      description: 'Brief project background shown on the detail page.',
+    }),
+    defineField({
+      name: 'publishedAt',
+      title: 'Published At',
+      type: 'datetime',
+      initialValue: () => new Date().toISOString(),
+    }),
   ],
   preview: {
     select: {

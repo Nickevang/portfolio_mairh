@@ -1,0 +1,125 @@
+import type {SanityImageSource} from './sanity.image'
+
+// ─── TypeScript Interfaces ────────────────────────────────────────────────────
+
+export interface ProjectListItem {
+  _id: string
+  title: string
+  slug: string
+  mediaType: 'photo' | 'video'
+  coverImage: SanityImageSource
+  lqip: string | null
+}
+
+export interface GalleryImage {
+  _key: string
+  asset: {_ref: string; _type: 'reference'}
+  hotspot?: {x: number; y: number}
+  crop?: {top: number; bottom: number; left: number; right: number}
+  lqip: string | null
+}
+
+export interface ProjectDetail {
+  _id: string
+  title: string
+  slug: string
+  mediaType: 'photo' | 'video'
+  coverImage: SanityImageSource
+  lqip: string | null
+  muxPlaybackId: string | null
+  gallery: GalleryImage[] | null
+  description: unknown[] | null
+  publishedAt: string | null
+}
+
+export interface SiteSettings {
+  siteName: string | null
+  tagline: string | null
+  heroHeading: string | null
+  heroSubheading: string | null
+  featuredProjects: ProjectListItem[] | null
+  bio: unknown[] | null
+  profilePhoto: SanityImageSource | null
+  profilePhotoLqip: string | null
+  disciplines: string[] | null
+  contactHeading: string | null
+  contactNote: string | null
+  contactEmail: string | null
+  instagram: string | null
+  vimeo: string | null
+  youtube: string | null
+  linkedin: string | null
+  seoTitle: string | null
+  seoDescription: string | null
+  ogImage: SanityImageSource | null
+  accentColor: string | null
+}
+
+// ─── GROQ Queries ─────────────────────────────────────────────────────────────
+
+export const siteSettingsQuery = /* groq */ `
+  *[_type == "siteSettings"][0] {
+    siteName,
+    tagline,
+    heroHeading,
+    heroSubheading,
+    "featuredProjects": featuredProjects[]-> {
+      _id,
+      title,
+      "slug": slug.current,
+      mediaType,
+      coverImage,
+      "lqip": coverImage.asset->metadata.lqip
+    },
+    bio,
+    profilePhoto,
+    "profilePhotoLqip": profilePhoto.asset->metadata.lqip,
+    disciplines,
+    contactHeading,
+    contactNote,
+    contactEmail,
+    instagram,
+    vimeo,
+    youtube,
+    linkedin,
+    seoTitle,
+    seoDescription,
+    ogImage,
+    accentColor
+  }
+`
+
+export const projectsQuery = /* groq */ `
+  *[_type == "project"] | order(publishedAt desc) {
+    _id,
+    title,
+    "slug": slug.current,
+    mediaType,
+    coverImage,
+    "lqip": coverImage.asset->metadata.lqip
+  }
+`
+
+export const projectBySlugQuery = /* groq */ `
+  *[_type == "project" && slug.current == $slug][0] {
+    _id,
+    title,
+    "slug": slug.current,
+    mediaType,
+    coverImage,
+    "lqip": coverImage.asset->metadata.lqip,
+    "muxPlaybackId": video.asset->data.playback_ids[0].id,
+    gallery[] {
+      ...,
+      "lqip": asset->metadata.lqip
+    },
+    description,
+    publishedAt
+  }
+`
+
+export const projectSlugsQuery = /* groq */ `
+  *[_type == "project" && defined(slug.current)] {
+    "slug": slug.current
+  }
+`

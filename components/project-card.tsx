@@ -8,6 +8,7 @@ export interface ProjectCardData {
   slug: string
   mediaType: 'photo' | 'video'
   coverImageUrl: string
+  lqip?: string
 }
 
 export function ProjectCard({project}: {project: ProjectCardData}) {
@@ -25,6 +26,8 @@ export function ProjectCard({project}: {project: ProjectCardData}) {
           fill
           sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+          placeholder={project.lqip ? 'blur' : 'empty'}
+          blurDataURL={project.lqip ?? undefined}
           priority={false}
         />
       </div>
@@ -32,9 +35,8 @@ export function ProjectCard({project}: {project: ProjectCardData}) {
         <div className="min-w-0">
           <div className="truncate text-sm text-white/90">{project.title}</div>
         </div>
-        <Icon className="h-4 w-4 text-white/50" aria-hidden="true" />
+        <Icon className="h-4 w-4 shrink-0 text-white/50" aria-hidden="true" />
       </div>
     </Link>
   )
 }
-

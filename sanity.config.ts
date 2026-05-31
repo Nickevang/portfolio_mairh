@@ -17,7 +17,18 @@ export default defineConfig({
   basePath: '/studio',
 
   plugins: [
-    deskTool(),
+    deskTool({
+      structure: (S) =>
+        S.list()
+          .title('Content')
+          .items([
+            S.listItem()
+              .title('Site Settings')
+              .child(S.document().schemaType('siteSettings').documentId('siteSettings')),
+            S.divider(),
+            S.documentTypeListItem('project').title('Projects'),
+          ]),
+    }),
     muxInput({
       video_quality: 'basic',
     }),
@@ -27,4 +38,3 @@ export default defineConfig({
     types: schemaTypes,
   },
 })
-

@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
+import { sanityFetch } from "@/lib/sanity.client";
+import { siteSettingsQuery, type SiteSettings } from "@/lib/sanity.queries";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,24 +16,33 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Mairh — Portfolio",
-  description: "Photography & videography portfolio.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await sanityFetch<SiteSettings>(siteSettingsQuery);
+  return {
+    title: {
+      default: settings?.seoTitle ?? "Portfolio",
+      template: `%s — ${settings?.siteName ?? "Portfolio"}`,
+    },
+    description: settings?.seoDescription ?? "Photography & videography portfolio.",
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const settings = await sanityFetch<SiteSettings>(siteSettingsQuery);
+
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        <Navbar />
+      <body className="min-h-full flex flex-col bg-black text-white">
+        <Navbar siteName={settings?.siteName} />
         <main className="flex-1">{children}</main>
+        <Footer />
       </body>
     </html>
   );

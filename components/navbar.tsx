@@ -11,14 +11,14 @@ const links = [
   {href: '/contact', label: 'Contact'},
 ] as const
 
-export function Navbar() {
+export function Navbar({siteName}: {siteName?: string | null}) {
   const pathname = usePathname()
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-black/70 backdrop-blur">
       <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="text-sm font-medium tracking-wide text-white/90">
-          Mairh
+          {siteName ?? 'Portfolio'}
         </Link>
         <div className="flex items-center gap-5">
           {links.map((l) => {
