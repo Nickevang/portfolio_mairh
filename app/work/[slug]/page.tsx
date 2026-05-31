@@ -7,6 +7,7 @@ import {sanityFetch} from '@/lib/sanity.client'
 import {urlForImage} from '@/lib/sanity.image'
 import {projectBySlugQuery, projectSlugsQuery, type ProjectDetail} from '@/lib/sanity.queries'
 import {MuxPlayer} from '@/components/MuxPlayer'
+import {GalleryGrid, type GalleryItem, type GalleryLayout} from '@/components/GalleryGrid'
 
 interface Props {
   params: Promise<{slug: string}>
@@ -77,27 +78,22 @@ export default async function ProjectPage({params}: Props) {
           )}
 
           {/* Gallery grid */}
-          {project.gallery && project.gallery.length > 0 && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {project.gallery.filter((img) => img.asset).map((img, i) => (
-                <div
-                  key={img._key ?? i}
-                  className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-white/10"
-                >
-                  <Image
-                    src={urlForImage(img).width(900).height(1125).fit('crop').url()}
-                    alt={`${project.title} — ${i + 1}`}
-                    fill
-                    className="object-cover"
-                    placeholder={img.lqip ? 'blur' : 'empty'}
-                    blurDataURL={img.lqip ?? undefined}
-                    sizes="(min-width: 640px) 50vw, 100vw"
-                    priority={i < 2}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+          {project.gallery && project.gallery.length > 0 && (() => {
+            const galleryItems: GalleryItem[] = project.gallery!
+              .filter((img) => img.asset)
+              .map((img, i) => ({
+                key: img._key ?? String(i),
+                src: urlForImage(img).width(900).url(),
+                fullSrc: urlForImage(img).width(2400).url(),
+                width: img.dimensions?.width ?? 900,
+                height: img.dimensions?.height ?? 1200,
+                lqip: img.lqip ?? undefined,
+                displaySize: (img.displaySize ?? 'half') as 'half' | 'third' | 'full',
+                alt: `${project.title} — ${i + 1}`,
+              }))
+            const layout = (project.galleryLayout ?? 'mixed') as GalleryLayout
+            return <GalleryGrid items={galleryItems} layout={layout} />
+          })()}
         </div>
       )}
 

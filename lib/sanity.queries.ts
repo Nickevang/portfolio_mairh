@@ -17,6 +17,8 @@ export interface GalleryImage {
   hotspot?: {x: number; y: number}
   crop?: {top: number; bottom: number; left: number; right: number}
   lqip: string | null
+  dimensions: {width: number; height: number} | null
+  displaySize: 'half' | 'third' | 'full' | null
 }
 
 export interface ProjectDetail {
@@ -27,6 +29,7 @@ export interface ProjectDetail {
   coverImage: SanityImageSource
   lqip: string | null
   muxPlaybackId: string | null
+  galleryLayout: 'mixed' | 'masonry' | '2-col' | '3-col' | null
   gallery: GalleryImage[] | null
   description: unknown[] | null
   publishedAt: string | null
@@ -125,9 +128,11 @@ export const projectBySlugQuery = /* groq */ `
     coverImage,
     "lqip": coverImage.asset->metadata.lqip,
     "muxPlaybackId": video.asset->data.playback_ids[0].id,
+    galleryLayout,
     gallery[defined(asset._ref)] {
       ...,
-      "lqip": asset->metadata.lqip
+      "lqip": asset->metadata.lqip,
+      "dimensions": asset->metadata.dimensions
     },
     description,
     publishedAt

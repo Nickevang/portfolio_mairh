@@ -47,6 +47,22 @@ export const project = defineType({
       hidden: ({document}) => document?.mediaType !== 'video',
     }),
     defineField({
+      name: 'galleryLayout',
+      title: 'Gallery Layout',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Mixed — per-photo control (half / third / full)', value: 'mixed'},
+          {title: 'Masonry — waterfall auto-flow', value: 'masonry'},
+          {title: '2 columns — uniform grid', value: '2-col'},
+          {title: '3 columns — uniform grid', value: '3-col'},
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'mixed',
+      hidden: ({document}) => document?.mediaType !== 'photo',
+    }),
+    defineField({
       name: 'gallery',
       title: 'Gallery',
       type: 'array',
@@ -54,6 +70,24 @@ export const project = defineType({
         {
           type: 'image',
           options: {hotspot: true},
+          fields: [
+            defineField({
+              name: 'displaySize',
+              title: 'Display Size',
+              description: 'Controls width in "Mixed" layout mode.',
+              type: 'string',
+              options: {
+                list: [
+                  {title: 'Half — 2 per row', value: 'half'},
+                  {title: 'Third — 3 per row', value: 'third'},
+                  {title: 'Full — hero width', value: 'full'},
+                ],
+                layout: 'radio',
+                direction: 'horizontal',
+              },
+              initialValue: 'half',
+            }),
+          ],
         },
       ],
       hidden: ({document}) => document?.mediaType !== 'photo',
