@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import {useState, useEffect, useCallback, useRef} from 'react'
-import {ChevronLeft, ChevronRight} from 'lucide-react'
+import {ChevronUp, ChevronDown, ChevronRight} from 'lucide-react'
 
 export interface Slide {
   key: string
@@ -14,27 +14,29 @@ export interface Slide {
   lqip?: string
 }
 
-const AUTOPLAY_MS = 6000
-const SLIDE_MS = 850
-const EASING = `${SLIDE_MS}ms cubic-bezier(0.77, 0, 0.175, 1) both`
+const DWELL_MS  = 5500  // how long each photo is shown
+const SLIDE_MS  = 950   // transition duration
+const EASING    = `${SLIDE_MS}ms cubic-bezier(0.77, 0, 0.175, 1) both`
+const WHEEL_COOLDOWN = SLIDE_MS + 400
 
 type Dir = 'forward' | 'backward'
 
 export function HeroSlideshow({slides}: {slides: Slide[]}) {
-  const [active, setActive] = useState(0)
-  const [outgoing, setOutgoing] = useState<number | null>(null)
-  const [dir, setDir] = useState<Dir>('forward')
+  const [active, setActive]       = useState(0)
+  const [outgoing, setOutgoing]   = useState<number | null>(null)
+  const [dir, setDir]             = useState<Dir>('forward')
   const [animating, setAnimating] = useState(false)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const timer        = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const wheelLocked  = useRef(false)
 
-  const clearTimer = () => {
+  const clearAutoplay = () => {
     if (timer.current) clearTimeout(timer.current)
   }
 
   const goTo = useCallback(
     (newIndex: number, direction: Dir) => {
       if (animating || newIndex === active) return
-      clearTimer()
+      clearAutoplay()
       setDir(direction)
       setOutgoing(active)
       setActive(newIndex)
@@ -56,21 +58,35 @@ export function HeroSlideshow({slides}: {slides: Slide[]}) {
     [active, slides.length, goTo],
   )
 
-  // Autoplay
+  // ── Autoplay ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (slides.length <= 1) return
-    timer.current = setTimeout(next, AUTOPLAY_MS)
-    return clearTimer
+    timer.current = setTimeout(next, DWELL_MS)
+    return clearAutoplay
   }, [active, next, slides.length])
 
-  // Keyboard
+  // ── Keyboard ────────────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') next()
-      if (e.key === 'ArrowLeft') prev()
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next()
+      if (e.key === 'ArrowUp'   || e.key === 'ArrowLeft')  prev()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
+  }, [next, prev])
+
+  // ── Mouse wheel ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    const onWheel = (e: WheelEvent) => {
+      if (wheelLocked.current) return
+      if (Math.abs(e.deltaY) < 20) return // ignore tiny trackpad nudges
+      wheelLocked.current = true
+      if (e.deltaY > 0) next()
+      else prev()
+      setTimeout(() => { wheelLocked.current = false }, WHEEL_COOLDOWN)
+    }
+    window.addEventListener('wheel', onWheel, {passive: true})
+    return () => window.removeEventListener('wheel', onWheel)
   }, [next, prev])
 
   if (!slides.length) return null
@@ -80,14 +96,13 @@ export function HeroSlideshow({slides}: {slides: Slide[]}) {
       {/* ── Slides ──────────────────────────────────────────────────── */}
       {slides.map((slide, i) => {
         const isActive = i === active
-        const isOut = i === outgoing
-        const visible = isActive || isOut
+        const isOut    = i === outgoing
+        const visible  = isActive || isOut
 
-        // Pick animation for this render
         let anim = 'none'
         if (animating) {
-          if (isActive) anim = dir === 'forward' ? 'slide-enter-right' : 'slide-enter-left'
-          if (isOut)    anim = dir === 'forward' ? 'slide-exit-left'   : 'slide-exit-right'
+          if (isActive) anim = dir === 'forward' ? 'slide-enter-bottom' : 'slide-enter-top'
+          if (isOut)    anim = dir === 'forward' ? 'slide-exit-top'     : 'slide-exit-bottom'
         }
 
         return (
@@ -101,7 +116,6 @@ export function HeroSlideshow({slides}: {slides: Slide[]}) {
               animation: anim !== 'none' ? `${anim} ${EASING}` : 'none',
             }}
           >
-            {/* Photo */}
             <Image
               src={slide.imageUrl}
               alt={slide.title}
@@ -113,10 +127,10 @@ export function HeroSlideshow({slides}: {slides: Slide[]}) {
               blurDataURL={slide.lqip ?? undefined}
             />
 
-            {/* Gradient */}
+            {/* gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/25 pointer-events-none" />
 
-            {/* Text overlay — only interactive on active slide */}
+            {/* text */}
             <div className="absolute inset-x-0 bottom-0 pb-20 md:pb-24 px-8 md:px-16 lg:px-24">
               <Link
                 href={`/work/${slide.slug}`}
@@ -132,8 +146,7 @@ export function HeroSlideshow({slides}: {slides: Slide[]}) {
                   </p>
                 )}
                 <span className="mt-4 inline-flex items-center gap-1 text-xs tracking-widest uppercase text-white/45 group-hover:text-white/90 transition-colors duration-300">
-                  View project
-                  <ChevronRight className="w-3 h-3" />
+                  View project <ChevronRight className="w-3 h-3" />
                 </span>
               </Link>
             </div>
@@ -141,37 +154,37 @@ export function HeroSlideshow({slides}: {slides: Slide[]}) {
         )
       })}
 
-      {/* ── Prev / Next arrows ─────────────────────────────────────── */}
+      {/* ── Up / Down arrows ─────────────────────────────────────────── */}
       {slides.length > 1 && (
         <>
           <button
             onClick={prev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 text-white/35 hover:text-white transition-colors duration-300"
+            className="absolute right-5 top-1/2 -translate-y-8 z-10 p-2 text-white/35 hover:text-white transition-colors duration-300"
             aria-label="Previous slide"
           >
-            <ChevronLeft className="w-7 h-7" />
+            <ChevronUp className="w-6 h-6" />
           </button>
           <button
             onClick={next}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 text-white/35 hover:text-white transition-colors duration-300"
+            className="absolute right-5 top-1/2 translate-y-2 z-10 p-2 text-white/35 hover:text-white transition-colors duration-300"
             aria-label="Next slide"
           >
-            <ChevronRight className="w-7 h-7" />
+            <ChevronDown className="w-6 h-6" />
           </button>
         </>
       )}
 
-      {/* ── Progress dots ────────────────────────────────────────────── */}
+      {/* ── Vertical dot indicators ──────────────────────────────────── */}
       {slides.length > 1 && (
-        <div className="absolute bottom-7 left-8 md:left-16 lg:left-24 z-10 flex items-center gap-[6px]">
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 z-10 flex flex-col items-center gap-[6px]" style={{marginTop: '3rem'}}>
           {slides.map((_, i) => (
             <button
               key={i}
               onClick={() => goTo(i, i > active ? 'forward' : 'backward')}
               aria-label={`Go to slide ${i + 1}`}
-              className="h-[2px] rounded-full bg-white transition-all duration-400"
+              className="w-[2px] rounded-full bg-white transition-all duration-400"
               style={{
-                width: i === active ? '2rem' : '0.625rem',
+                height: i === active ? '2rem' : '0.625rem',
                 opacity: i === active ? 1 : 0.3,
               }}
             />
@@ -179,9 +192,9 @@ export function HeroSlideshow({slides}: {slides: Slide[]}) {
         </div>
       )}
 
-      {/* ── Slide counter ─────────────────────────────────────────────── */}
+      {/* ── Counter ───────────────────────────────────────────────────── */}
       {slides.length > 1 && (
-        <div className="absolute bottom-[1.85rem] right-8 md:right-16 lg:right-24 z-10 text-[11px] text-white/30 tabular-nums tracking-widest select-none">
+        <div className="absolute bottom-7 right-8 md:right-10 z-10 text-[11px] text-white/30 tabular-nums tracking-widest select-none">
           {String(active + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}
         </div>
       )}
