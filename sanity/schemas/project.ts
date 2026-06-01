@@ -53,6 +53,13 @@ export const project = defineType({
       hidden: ({document}) => document?.mediaType !== 'video',
     }),
     defineField({
+      name: 'subprojects',
+      title: 'Sub-projects',
+      type: 'array',
+      of: [{type: 'reference', to: [{type: 'project'}]}],
+      description: 'Child projects displayed as a gallery on this page (e.g. episodes in a series, shoots in a campaign).',
+    }),
+    defineField({
       name: 'galleryLayout',
       title: 'Gallery Layout',
       type: 'string',

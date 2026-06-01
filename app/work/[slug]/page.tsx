@@ -8,6 +8,7 @@ import {urlForImage} from '@/lib/sanity.image'
 import {projectBySlugQuery, projectSlugsQuery, type ProjectDetail} from '@/lib/sanity.queries'
 import {MuxPlayer} from '@/components/MuxPlayer'
 import {GalleryGrid, type GalleryItem, type GalleryLayout} from '@/components/GalleryGrid'
+import {ProjectCard, type ProjectCardData} from '@/components/project-card'
 
 interface Props {
   params: Promise<{slug: string}>
@@ -102,6 +103,28 @@ export default async function ProjectPage({params}: Props) {
         <div className="prose prose-invert prose-sm max-w-2xl prose-p:text-white/70 prose-p:leading-7">
           <PortableText value={project.description as Parameters<typeof PortableText>[0]['value']} />
         </div>
+      )}
+
+      {/* Sub-projects */}
+      {project.subprojects && project.subprojects.length > 0 && (
+        <section className="mt-12">
+          <h2 className="mb-6 text-sm tracking-widest uppercase text-white/30">
+            {project.subprojects.length === 1 ? '1 project' : `${project.subprojects.length} projects`}
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {project.subprojects.map((sub) => {
+              const card: ProjectCardData = {
+                _id: sub._id,
+                title: sub.title,
+                slug: sub.slug,
+                mediaType: sub.mediaType,
+                coverImageUrl: urlForImage(sub.coverImage).width(800).height(1000).fit('crop').url(),
+                lqip: sub.lqip ?? undefined,
+              }
+              return <ProjectCard key={sub._id} project={card} cardStyle="overlay" />
+            })}
+          </div>
+        </section>
       )}
     </article>
   )

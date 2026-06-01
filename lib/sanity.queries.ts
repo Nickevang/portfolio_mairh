@@ -22,6 +22,16 @@ export interface GalleryImage {
   displaySize: 'half' | 'third' | 'full' | null
 }
 
+export interface SubprojectItem {
+  _id: string
+  title: string
+  slug: string
+  tagline: string | null
+  mediaType: 'photo' | 'video'
+  coverImage: SanityImageSource
+  lqip: string | null
+}
+
 export interface ProjectDetail {
   _id: string
   title: string
@@ -32,6 +42,7 @@ export interface ProjectDetail {
   muxPlaybackId: string | null
   galleryLayout: 'mixed' | 'masonry' | '2-col' | '3-col' | null
   gallery: GalleryImage[] | null
+  subprojects: SubprojectItem[] | null
   description: unknown[] | null
   publishedAt: string | null
 }
@@ -136,6 +147,15 @@ export const projectBySlugQuery = /* groq */ `
       ...,
       "lqip": asset->metadata.lqip,
       "dimensions": asset->metadata.dimensions
+    },
+    "subprojects": subprojects[]->{
+      _id,
+      title,
+      "slug": slug.current,
+      tagline,
+      mediaType,
+      coverImage,
+      "lqip": coverImage.asset->metadata.lqip
     },
     description,
     publishedAt
