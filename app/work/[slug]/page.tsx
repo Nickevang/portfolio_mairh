@@ -90,6 +90,7 @@ export default async function ProjectPage({params}: Props) {
                 height: img.dimensions?.height ?? 1200,
                 lqip: img.lqip ?? undefined,
                 displaySize: (img.displaySize ?? 'half') as 'half' | 'third' | 'full',
+                colSpan: img.colSpan ?? undefined,
                 alt: `${project.title} — ${i + 1}`,
               }))
             const layout = (project.galleryLayout ?? 'mixed') as GalleryLayout

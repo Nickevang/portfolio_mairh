@@ -20,6 +20,7 @@ export interface GalleryImage {
   lqip: string | null
   dimensions: {width: number; height: number} | null
   displaySize: 'half' | 'third' | 'full' | null
+  colSpan: number | null
 }
 
 export interface SubprojectItem {
@@ -40,7 +41,7 @@ export interface ProjectDetail {
   coverImage: SanityImageSource
   lqip: string | null
   muxPlaybackId: string | null
-  galleryLayout: 'mixed' | 'masonry' | '2-col' | '3-col' | null
+  galleryLayout: 'mixed' | 'masonry' | '2-col' | '3-col' | 'custom' | null
   gallery: GalleryImage[] | null
   subprojects: SubprojectItem[] | null
   description: unknown[] | null

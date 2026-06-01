@@ -1,4 +1,5 @@
 import {defineField, defineType} from 'sanity'
+import {GridLayoutEditor} from '../components/GridLayoutEditor'
 
 export const project = defineType({
   name: 'project',
@@ -65,6 +66,7 @@ export const project = defineType({
       type: 'string',
       options: {
         list: [
+          {title: 'Custom — visual grid editor', value: 'custom'},
           {title: 'Mixed — per-photo control (half / third / full)', value: 'mixed'},
           {title: 'Masonry — waterfall auto-flow', value: 'masonry'},
           {title: '2 columns — uniform grid', value: '2-col'},
@@ -79,6 +81,7 @@ export const project = defineType({
       name: 'gallery',
       title: 'Gallery',
       type: 'array',
+      components: {input: GridLayoutEditor},
       of: [
         {
           type: 'image',
@@ -99,6 +102,22 @@ export const project = defineType({
                 direction: 'horizontal',
               },
               initialValue: 'half',
+            }),
+            defineField({
+              name: 'colSpan',
+              title: 'Column Span',
+              description: 'Width in "Custom" layout mode (1 = thin, 6 = full width).',
+              type: 'number',
+              options: {
+                list: [
+                  {title: '1 — thin', value: 1},
+                  {title: '2 — third', value: 2},
+                  {title: '3 — half', value: 3},
+                  {title: '4 — two-thirds', value: 4},
+                  {title: '6 — full', value: 6},
+                ],
+              },
+              initialValue: 3,
             }),
           ],
         },

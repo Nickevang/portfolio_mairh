@@ -12,10 +12,11 @@ export interface GalleryItem {
   height: number
   lqip?: string
   displaySize: 'half' | 'third' | 'full'
+  colSpan?: number
   alt: string
 }
 
-export type GalleryLayout = 'mixed' | 'masonry' | '2-col' | '3-col'
+export type GalleryLayout = 'mixed' | 'masonry' | '2-col' | '3-col' | 'custom'
 
 // ─── Thumbnail grid ───────────────────────────────────────────────────────────
 
@@ -247,6 +248,43 @@ export function GalleryGrid({
             onPrev={prev}
             onNext={next}
           />
+        )}
+      </>
+    )
+  }
+
+  // ── Custom (per-photo colSpan, 6-column base grid) ────────────────────────
+  if (layout === 'custom') {
+    return (
+      <>
+        <div className="grid grid-cols-6 gap-3">
+          {items.map((item, i) => {
+            const span = item.colSpan ?? 3
+            return (
+              <button
+                key={item.key}
+                onClick={() => setLightboxIndex(i)}
+                className="block overflow-hidden rounded-xl cursor-zoom-in group focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                style={{gridColumn: `span ${span}`}}
+              >
+                <Image
+                  src={item.src}
+                  alt={item.alt}
+                  width={item.width}
+                  height={item.height}
+                  style={{width: '100%', height: 'auto', display: 'block'}}
+                  className="transition-transform duration-500 group-hover:scale-[1.02]"
+                  placeholder={item.lqip ? 'blur' : 'empty'}
+                  blurDataURL={item.lqip ?? undefined}
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  priority={i < 3}
+                />
+              </button>
+            )
+          })}
+        </div>
+        {lightboxIndex !== null && (
+          <Lightbox items={items} index={lightboxIndex} onClose={close} onPrev={prev} onNext={next} />
         )}
       </>
     )
