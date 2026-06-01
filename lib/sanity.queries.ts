@@ -76,7 +76,7 @@ export interface SiteSettings {
   workGridCols: 2 | 3 | 4 | null
   cardStyle: 'below' | 'overlay' | null
   colorScheme: 'dark' | 'light' | null
-  fontFamily: 'geist' | 'playfair' | 'dm-sans' | null
+  fontFamily: 'geist' | 'playfair' | 'dm-sans' | 'pf-transport' | 'pf-bague' | 'asty' | null
 }
 
 // ─── GROQ Queries ─────────────────────────────────────────────────────────────
