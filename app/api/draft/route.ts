@@ -10,7 +10,8 @@ export async function GET(request: Request) {
     redirect('/')
   }
 
-  const secret = searchParams.get('secret')
+  // Sanity Presentation tool sends 'sanity-preview-secret'; fall back to 'secret' for manual use
+  const secret = searchParams.get('sanity-preview-secret') ?? searchParams.get('secret')
   if (secret !== process.env.SANITY_PREVIEW_SECRET) {
     return new Response('Invalid secret', {status: 401})
   }
@@ -18,6 +19,8 @@ export async function GET(request: Request) {
   const draft = await draftMode()
   draft.enable()
 
-  const redirectTo = searchParams.get('redirect') ?? '/'
+  // Sanity sends 'sanity-preview-pathname'; fall back to 'redirect'
+  const redirectTo =
+    searchParams.get('sanity-preview-pathname') ?? searchParams.get('redirect') ?? '/'
   redirect(redirectTo)
 }
