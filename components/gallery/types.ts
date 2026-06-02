@@ -59,6 +59,9 @@ export interface Section {
   bentoTemplate?: 'A' | 'B' | 'C'
   // panorama
   panoramaHeight?: number
+  // 2D row positioning
+  sectionRow?: number
+  sectionWidth?: number
 }
 
 // ── Rendered types (client-side renderers) ───────────────────────────────────
@@ -95,4 +98,7 @@ export interface RenderedSection {
   heroSide?: 'left' | 'right'
   bentoTemplate?: 'A' | 'B' | 'C'
   panoramaHeight?: number
+  // 2D row positioning
+  sectionRow?: number
+  sectionWidth?: number
 }

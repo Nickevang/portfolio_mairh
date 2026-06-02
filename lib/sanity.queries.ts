@@ -32,6 +32,9 @@ export interface ProjectSection {
   heroSide: 'left' | 'right' | null
   bentoTemplate: 'A' | 'B' | 'C' | null
   panoramaHeight: number | null
+  // 2D row positioning
+  sectionRow: number | null
+  sectionWidth: number | null
 }
 
 export interface ProjectListItem {
@@ -206,6 +209,8 @@ export const projectBySlugQuery = /* groq */ `
       heroSide,
       bentoTemplate,
       panoramaHeight,
+      sectionRow,
+      sectionWidth,
       images[defined(asset._ref)] {
         _key,
         asset,

@@ -6,6 +6,7 @@ import {presentationTool} from 'sanity/presentation'
 import {schemaTypes} from './sanity/schemas'
 import {MigrateToSectionsAction} from './sanity/actions/migrateToSections'
 import {GalleryEditorView} from './sanity/components/GalleryEditor'
+import {GalleryEditorTool, GalleryIcon} from './sanity/tools/GalleryEditorTool'
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || 'missing'
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || 'production'
@@ -61,6 +62,16 @@ export default defineConfig({
         ? [...prev, MigrateToSectionsAction]
         : prev,
   },
+
+  tools: (prev) => [
+    ...prev,
+    {
+      name: 'gallery-editor',
+      title: 'Gallery',
+      icon: GalleryIcon,
+      component: GalleryEditorTool,
+    },
+  ],
 
   schema: {
     types: schemaTypes,

@@ -60,6 +60,8 @@ export default async function ProjectPage({params}: Props) {
           heroSide: section.heroSide ?? undefined,
           bentoTemplate: section.bentoTemplate ?? undefined,
           panoramaHeight: section.panoramaHeight ?? undefined,
+          sectionRow: section.sectionRow ?? undefined,
+          sectionWidth: section.sectionWidth ?? undefined,
           images: (section.images ?? []).map((img, i): RenderedImage => ({
             _key: img._key,
             src: urlForImage(img.asset).width(1200).url(),

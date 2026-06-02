@@ -8,6 +8,12 @@ export const gallerySection = defineType({
   type: 'object',
   fields: [
     defineField({
+      name: 'name',
+      title: 'Section Label',
+      type: 'string',
+      description: 'Optional name shown in the Gallery Editor sidebar. Not displayed on the site.',
+    }),
+    defineField({
       name: 'layoutType',
       title: 'Layout',
       type: 'string',
@@ -234,13 +240,30 @@ export const gallerySection = defineType({
       description: 'Fixed height of the horizontal panorama strip.',
       hidden: ({parent}) => parent?.layoutType !== 'panorama',
     }),
+
+    // ── 2D row positioning (managed via Gallery Editor, not form) ─────
+    defineField({
+      name: 'sectionRow',
+      title: 'Row group',
+      type: 'number',
+      description: 'Sections with the same row number appear side-by-side on the page.',
+      hidden: true,
+    }),
+    defineField({
+      name: 'sectionWidth',
+      title: 'Width in row (%)',
+      type: 'number',
+      initialValue: 100,
+      hidden: true,
+    }),
   ],
   preview: {
     select: {
+      name: 'name',
       layoutType: 'layoutType',
       media: 'images.0',
     },
-    prepare({layoutType, media}: {layoutType?: string; media?: unknown}) {
+    prepare({name, layoutType, media}: {name?: string; layoutType?: string; media?: unknown}) {
       const labels: Record<string, string> = {
         justified: 'Justified',
         masonry: 'Masonry',
@@ -257,8 +280,9 @@ export const gallerySection = defineType({
         scatter: 'Scatter',
         panorama: 'Panorama',
       }
+      const layoutLabel = labels[layoutType ?? ''] ?? 'Section'
       return {
-        title: labels[layoutType ?? ''] ?? 'Section',
+        title: name ? `${name} · ${layoutLabel}` : layoutLabel,
         media: media as Parameters<typeof Object>[0],
       }
     },

@@ -29,6 +29,7 @@ export interface GalleryImage {
 export interface GallerySection {
   _key: string
   _type: 'gallerySection'
+  name?: string
   layoutType: LayoutType
   images: GalleryImage[]
   // existing layout settings
@@ -45,6 +46,9 @@ export interface GallerySection {
   heroSide?: 'left' | 'right'
   bentoTemplate?: 'A' | 'B' | 'C'
   panoramaHeight?: number
+  // 2D row positioning
+  sectionRow?: number   // integer 1-10; sections with same value appear side-by-side
+  sectionWidth?: number // percentage: 25 | 33 | 50 | 67 | 75 | 100
 }
 
 export interface LegacyImage {

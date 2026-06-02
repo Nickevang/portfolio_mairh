@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import {useState, useRef} from 'react'
 import type {GalleryImage, GallerySection} from './types'
 
 // ── ImageCard ─────────────────────────────────────────────────────────────────
@@ -763,12 +763,35 @@ interface SectionCanvasProps {
   onReorder: (from: number, to: number) => void
   onDelete: (imageKey: string) => void
   onUpdateImage: (imageKey: string, updates: Partial<GalleryImage>) => void
+  onUpload: (files: File[]) => Promise<void>
+  uploading: boolean
 }
 
-export function SectionCanvas({section, imgUrl, onReorder, onDelete, onUpdateImage}: SectionCanvasProps) {
+export function SectionCanvas({section, imgUrl, onReorder, onDelete, onUpdateImage, onUpload, uploading}: SectionCanvasProps) {
   const [dragIdx, setDragIdx] = useState<number | null>(null)
   const [dropIdx, setDropIdx] = useState<number | null>(null)
+  const [fileDropping, setFileDropping] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const images = section.images ?? []
+
+  function isFileDrag(e: React.DragEvent) {
+    try { return Array.from(e.dataTransfer.types).includes('Files') } catch { return false }
+  }
+
+  function handleFileDrop(e: React.DragEvent) {
+    if (!isFileDrag(e)) return
+    e.preventDefault()
+    e.stopPropagation()
+    setFileDropping(false)
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
+    if (files.length) onUpload(files)
+  }
+
+  function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? [])
+    if (files.length) onUpload(files)
+    e.target.value = ''
+  }
 
   function dndProps(i: number) {
     return {
@@ -806,35 +829,88 @@ export function SectionCanvas({section, imgUrl, onReorder, onDelete, onUpdateIma
         overflowY: 'auto',
         padding: 16,
         background: '#111',
-        // Scrollbar
+        position: 'relative',
         scrollbarWidth: 'thin',
         scrollbarColor: '#2a2a2a transparent',
       }}
+      onDragOver={e => { if (isFileDrag(e)) { e.preventDefault(); setFileDropping(true) } }}
+      onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setFileDropping(false) }}
+      onDrop={handleFileDrop}
     >
-      {images.length === 0 ? (
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        style={{display: 'none'}}
+        onChange={handleFileInput}
+      />
+
+      {/* File drop overlay — appears when dragging images over the canvas */}
+      {fileDropping && (
         <div
           style={{
-            height: '100%',
-            minHeight: 200,
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(59,130,246,0.12)',
+            border: '2px dashed #3b82f6',
+            borderRadius: 8,
+            zIndex: 50,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#2e2e2e',
             gap: 8,
-            border: '1px dashed #222',
-            borderRadius: 8,
+            pointerEvents: 'none',
           }}
         >
-          <svg width={32} height={32} viewBox="0 0 32 32" fill="none">
-            <rect x={2} y={2} width={12} height={12} rx={2} stroke="#2e2e2e" strokeWidth={1.5}/>
-            <rect x={18} y={2} width={12} height={12} rx={2} stroke="#2e2e2e" strokeWidth={1.5}/>
-            <rect x={2} y={18} width={12} height={12} rx={2} stroke="#2e2e2e" strokeWidth={1.5}/>
-            <rect x={18} y={18} width={12} height={12} rx={2} stroke="#2e2e2e" strokeWidth={1.5}/>
+          <svg width={32} height={32} viewBox="0 0 32 32" fill="none" stroke="#3b82f6" strokeWidth={1.5}>
+            <rect x={2} y={8} width={28} height={20} rx={3}/>
+            <circle cx={11} cy={17} r={4}/>
+            <polyline points="2,28 9,18 15,24 21,14 30,28"/>
           </svg>
-          <span style={{fontSize: 12}}>
-            Add images to this section in the <strong style={{color: '#3a3a3a'}}>Edit</strong> tab
-          </span>
+          <span style={{fontSize: 13, color: '#3b82f6', fontWeight: 600}}>Drop to add photos</span>
+        </div>
+      )}
+
+      {images.length === 0 ? (
+        /* ── Empty state: full-area upload drop zone ── */
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          style={{
+            height: '100%',
+            minHeight: 240,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            border: '1px dashed #252525',
+            borderRadius: 8,
+            cursor: 'pointer',
+            transition: 'border-color 0.15s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.borderColor = '#3b82f6')}
+          onMouseLeave={e => (e.currentTarget.style.borderColor = '#252525')}
+        >
+          {uploading ? (
+            <span style={{fontSize: 12, color: '#555'}}>Uploading…</span>
+          ) : (
+            <>
+              <svg width={36} height={36} viewBox="0 0 36 36" fill="none" stroke="#333" strokeWidth={1.5}>
+                <rect x={2} y={8} width={32} height={22} rx={3}/>
+                <circle cx={12} cy={19} r={4}/>
+                <polyline points="2,30 10,19 17,25 24,14 34,30"/>
+                <line x1={18} y1={3} x2={18} y2={10}/>
+                <polyline points="14,7 18,3 22,7"/>
+              </svg>
+              <div style={{textAlign: 'center'}}>
+                <div style={{fontSize: 13, color: '#555', fontWeight: 600}}>Drop photos here</div>
+                <div style={{fontSize: 11, color: '#333', marginTop: 4}}>or click to browse</div>
+              </div>
+            </>
+          )}
         </div>
       ) : (
         <>
@@ -852,6 +928,45 @@ export function SectionCanvas({section, imgUrl, onReorder, onDelete, onUpdateIma
           {section.layoutType === 'bento' && <BentoCanvas {...canvasProps} />}
           {section.layoutType === 'scatter' && <ScatterCanvas {...canvasProps} />}
           {section.layoutType === 'panorama' && <PanoramaCanvas {...canvasProps} />}
+
+          {/* ── Add more photos strip ── */}
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              marginTop: 12,
+              padding: '8px 0',
+              border: '1px dashed #222',
+              borderRadius: 6,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 7,
+              cursor: 'pointer',
+              color: '#3a3a3a',
+              fontSize: 12,
+              transition: 'border-color 0.15s, color 0.15s',
+            }}
+            onMouseEnter={e => {
+              ;(e.currentTarget as HTMLDivElement).style.borderColor = '#3b82f6'
+              ;(e.currentTarget as HTMLDivElement).style.color = '#3b82f6'
+            }}
+            onMouseLeave={e => {
+              ;(e.currentTarget as HTMLDivElement).style.borderColor = '#222'
+              ;(e.currentTarget as HTMLDivElement).style.color = '#3a3a3a'
+            }}
+          >
+            {uploading ? (
+              'Uploading…'
+            ) : (
+              <>
+                <svg width={13} height={13} viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                  <line x1={6.5} y1={1} x2={6.5} y2={12}/>
+                  <line x1={1} y1={6.5} x2={12} y2={6.5}/>
+                </svg>
+                Add photos
+              </>
+            )}
+          </div>
         </>
       )}
     </div>

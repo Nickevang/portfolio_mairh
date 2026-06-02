@@ -62,7 +62,7 @@ export const project = defineType({
     }),
     defineField({
       name: 'galleryLayout',
-      title: 'Gallery Layout',
+      title: 'Gallery Layout (legacy)',
       type: 'string',
       options: {
         list: [
@@ -75,11 +75,11 @@ export const project = defineType({
         layout: 'radio',
       },
       initialValue: 'mixed',
-      hidden: ({document}) => document?.mediaType !== 'photo',
+      hidden: true,
     }),
     defineField({
       name: 'gallery',
-      title: 'Gallery',
+      title: 'Gallery (legacy)',
       type: 'array',
       components: {input: GridLayoutEditor},
       of: [
@@ -122,13 +122,13 @@ export const project = defineType({
           ],
         },
       ],
-      hidden: ({document}) => document?.mediaType !== 'photo',
+      hidden: true,
     }),
     defineField({
       name: 'sections',
       title: 'Gallery Sections',
       description:
-        'New per-section gallery with 8 layout options. When populated, replaces the legacy Gallery on the live site. Use "Convert Gallery → Sections" to migrate existing images.',
+        'Use the Gallery Editor tool (camera icon in the sidebar) to manage sections visually.',
       type: 'array',
       of: [{type: 'gallerySection'}],
       hidden: ({document}) => document?.mediaType !== 'photo',

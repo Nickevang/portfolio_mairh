@@ -40,6 +40,8 @@ export function GalleryEditorView({document: {displayed}, documentId, schemaType
 
   const [sections, setSections] = useState<GallerySection[]>(serverSections)
   const [selectedKey, setSelectedKey] = useState<string | null>(serverSections[0]?._key ?? null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const prevTimestamp = useRef(serverTimestamp)
 
   // Sync local state when external edits arrive (Edit tab, migration action, etc.)
@@ -66,6 +68,34 @@ export function GalleryEditorView({document: {displayed}, documentId, schemaType
   function commit(next: GallerySection[]) {
     setSections(next)
     patch.execute([{set: {sections: next}}])
+  }
+
+  async function handleUploadImages(files: File[]) {
+    if (!selectedKey || files.length === 0) return
+    setUploading(true)
+    try {
+      const uploads = await Promise.all(
+        files.map(file => client.assets.upload('image', file, {filename: file.name}))
+      )
+      const newImages: GalleryImage[] = uploads.map(asset => ({
+        _key: newKey(),
+        _type: 'image',
+        asset: {_ref: asset._id, _type: 'reference' as const},
+      }))
+      const next = sections.map(s =>
+        s._key !== selectedKey ? s : {...s, images: [...s.images, ...newImages]}
+      )
+      commit(next)
+    } catch (err) {
+      console.error('Upload failed:', err)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  function handleRenameSection(key: string, name: string) {
+    const next = sections.map(s => s._key === key ? {...s, name: name || undefined} : s)
+    commit(next)
   }
 
   // ── Section handlers ──────────────────────────────────────────────────
@@ -205,15 +235,82 @@ export function GalleryEditorView({document: {displayed}, documentId, schemaType
   return (
     <div
       style={{
+        ...(isFullscreen
+          ? {position: 'fixed', inset: 0, zIndex: 9999}
+          : {height: '100%'}),
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
         background: '#111',
         color: '#fff',
         overflow: 'hidden',
         fontFamily: 'system-ui, sans-serif',
       }}
     >
+      {/* Toolbar */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 16px',
+          height: 36,
+          borderBottom: '1px solid #1e1e1e',
+          background: '#0d0d0d',
+          flexShrink: 0,
+        }}
+      >
+        <span style={{fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3a3a3a'}}>
+          Gallery Editor
+        </span>
+        <button
+          onClick={() => setIsFullscreen(f => !f)}
+          title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Expand to fullscreen'}
+          style={{
+            background: 'none',
+            border: '1px solid #2a2a2a',
+            borderRadius: 4,
+            color: '#555',
+            cursor: 'pointer',
+            fontSize: 11,
+            padding: '3px 10px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5,
+            transition: 'border-color 0.1s, color 0.1s',
+          }}
+          onMouseEnter={e => {
+            ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#555'
+            ;(e.currentTarget as HTMLButtonElement).style.color = '#aaa'
+          }}
+          onMouseLeave={e => {
+            ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#2a2a2a'
+            ;(e.currentTarget as HTMLButtonElement).style.color = '#555'
+          }}
+        >
+          {isFullscreen ? (
+            <>
+              <svg width={11} height={11} viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <polyline points="7,0 11,0 11,4"/>
+                <polyline points="4,11 0,11 0,7"/>
+                <line x1="11" y1="0" x2="6.5" y2="4.5"/>
+                <line x1="0" y1="11" x2="4.5" y2="6.5"/>
+              </svg>
+              Exit fullscreen
+            </>
+          ) : (
+            <>
+              <svg width={11} height={11} viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <polyline points="7,4 11,4 11,0"/>
+                <polyline points="4,7 0,7 0,11"/>
+                <line x1="11" y1="0" x2="6.5" y2="4.5"/>
+                <line x1="0" y1="11" x2="4.5" y2="6.5"/>
+              </svg>
+              Fullscreen
+            </>
+          )}
+        </button>
+      </div>
+
       {/* Migration banner */}
       {hasOldFormat && (
         <div
@@ -259,6 +356,7 @@ export function GalleryEditorView({document: {displayed}, documentId, schemaType
           onDelete={handleDeleteSection}
           onDuplicate={handleDuplicateSection}
           onReorder={handleReorderSections}
+          onRename={handleRenameSection}
         />
 
         <div style={{flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
@@ -275,6 +373,8 @@ export function GalleryEditorView({document: {displayed}, documentId, schemaType
                 onReorder={handleReorderImages}
                 onDelete={handleDeleteImage}
                 onUpdateImage={handleUpdateImage}
+                onUpload={handleUploadImages}
+                uploading={uploading}
               />
               <SectionControls section={selectedSection} onChange={handleSectionUpdate} />
             </>

@@ -43,7 +43,7 @@ function Group({children}: {children: React.ReactNode}) {
 export function SectionControls({section, onChange}: Props) {
   const {layoutType} = section
 
-  const hasControls =
+  const hasLayoutControls =
     layoutType === 'masonry' ||
     layoutType === 'uniformGrid' ||
     layoutType === 'justified' ||
@@ -54,8 +54,6 @@ export function SectionControls({section, onChange}: Props) {
     layoutType === 'editorial' ||
     layoutType === 'bento' ||
     layoutType === 'panorama'
-
-  if (!hasControls) return null
 
   return (
     <div
@@ -70,6 +68,34 @@ export function SectionControls({section, onChange}: Props) {
         flexShrink: 0,
       }}
     >
+      {/* ── Row / width positioning — always visible ── */}
+      <Group>
+        <Label>Side by side:</Label>
+        <Btn active={section.sectionRow == null} onClick={() => onChange({sectionRow: undefined, sectionWidth: undefined})}>
+          Solo
+        </Btn>
+        {[1, 2, 3, 4, 5].map(n => (
+          <Btn key={n} active={section.sectionRow === n} onClick={() => onChange({sectionRow: n, sectionWidth: section.sectionWidth ?? 50})}>
+            Row {n}
+          </Btn>
+        ))}
+      </Group>
+
+      {section.sectionRow != null && (
+        <Group>
+          <Label>Width:</Label>
+          {[25, 33, 50, 67, 75, 100].map(w => (
+            <Btn key={w} active={(section.sectionWidth ?? 50) === w} onClick={() => onChange({sectionWidth: w})}>
+              {w}%
+            </Btn>
+          ))}
+        </Group>
+      )}
+
+      {/* Divider between positioning and layout controls */}
+      {hasLayoutControls && (
+        <div style={{width: '100%', height: 1, background: '#1e1e1e', margin: '0 -16px', flexBasis: '100%'}} />
+      )}
       {/* Column count: masonry + uniformGrid */}
       {(layoutType === 'masonry' || layoutType === 'uniformGrid') && (
         <Group>

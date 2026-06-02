@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import {useState, useRef} from 'react'
 import type {GallerySection} from './types'
 
 const LAYOUT_LABELS: Record<string, string> = {
@@ -10,6 +10,12 @@ const LAYOUT_LABELS: Record<string, string> = {
   cinematic: 'Cinematic',
   mosaic: 'Mosaic',
   filmstrip: 'Filmstrip',
+  album: 'Album',
+  editorial: 'Editorial',
+  diptych: 'Diptych',
+  bento: 'Bento',
+  scatter: 'Scatter',
+  panorama: 'Panorama',
 }
 
 interface Props {
@@ -21,6 +27,25 @@ interface Props {
   onDelete: (key: string) => void
   onDuplicate: (key: string) => void
   onReorder: (from: number, to: number) => void
+  onRename: (key: string, name: string) => void
+}
+
+function DragHandle() {
+  return (
+    <svg
+      width={8}
+      height={12}
+      viewBox="0 0 8 12"
+      style={{flexShrink: 0, opacity: 0.35, cursor: 'grab'}}
+    >
+      <circle cx={2} cy={2} r={1.5} fill="#fff" />
+      <circle cx={6} cy={2} r={1.5} fill="#fff" />
+      <circle cx={2} cy={6} r={1.5} fill="#fff" />
+      <circle cx={6} cy={6} r={1.5} fill="#fff" />
+      <circle cx={2} cy={10} r={1.5} fill="#fff" />
+      <circle cx={6} cy={10} r={1.5} fill="#fff" />
+    </svg>
+  )
 }
 
 export function SectionList({
@@ -32,11 +57,29 @@ export function SectionList({
   onDelete,
   onDuplicate,
   onReorder,
+  onRename,
 }: Props) {
   const [dragIdx, setDragIdx] = useState<number | null>(null)
   const [dropIdx, setDropIdx] = useState<number | null>(null)
   const [hoveredKey, setHoveredKey] = useState<string | null>(null)
   const [openMenuKey, setOpenMenuKey] = useState<string | null>(null)
+  const [editingNameKey, setEditingNameKey] = useState<string | null>(null)
+  const [editingNameValue, setEditingNameValue] = useState('')
+  const nameInputRef = useRef<HTMLInputElement>(null)
+
+  function startEditing(section: GallerySection, e: React.MouseEvent) {
+    e.stopPropagation()
+    setEditingNameKey(section._key)
+    setEditingNameValue(section.name ?? '')
+    setTimeout(() => nameInputRef.current?.select(), 0)
+  }
+
+  function commitName() {
+    if (editingNameKey) {
+      onRename(editingNameKey, editingNameValue.trim())
+    }
+    setEditingNameKey(null)
+  }
 
   return (
     <div
@@ -53,30 +96,23 @@ export function SectionList({
       {/* Header */}
       <div
         style={{
-          padding: '14px 16px 10px',
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: '#555',
+          padding: '12px 16px 8px',
           flexShrink: 0,
           borderBottom: '1px solid #1e1e1e',
         }}
       >
-        Sections
+        <div style={{fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#555'}}>
+          Sections
+        </div>
+        <div style={{fontSize: 10, color: '#333', marginTop: 3}}>
+          Stack top → bottom on page · drag ⠿ to reorder
+        </div>
       </div>
 
       {/* Section cards */}
       <div style={{flex: 1, overflowY: 'auto', padding: '8px 8px 0'}}>
         {sections.length === 0 && (
-          <div
-            style={{
-              padding: '24px 12px',
-              textAlign: 'center',
-              fontSize: 12,
-              color: '#333',
-            }}
-          >
+          <div style={{padding: '24px 12px', textAlign: 'center', fontSize: 12, color: '#333'}}>
             No sections yet
           </div>
         )}
@@ -86,6 +122,7 @@ export function SectionList({
           const isDragging = dragIdx === i
           const isDropTarget = dropIdx === i && dragIdx !== i
           const isHovered = hoveredKey === section._key
+          const isEditingName = editingNameKey === section._key
           const thumbs = section.images.slice(0, 5)
 
           return (
@@ -94,7 +131,7 @@ export function SectionList({
               draggable
               onClick={() => { onSelect(section._key); setOpenMenuKey(null) }}
               onMouseEnter={() => setHoveredKey(section._key)}
-              onMouseLeave={() => { setHoveredKey(null) }}
+              onMouseLeave={() => setHoveredKey(null)}
               onDragStart={e => {
                 e.dataTransfer.effectAllowed = 'move'
                 setDragIdx(i)
@@ -161,19 +198,10 @@ export function SectionList({
                         src={url}
                         alt=""
                         draggable={false}
-                        style={{
-                          flex: 1,
-                          minWidth: 0,
-                          height: '100%',
-                          objectFit: 'cover',
-                          borderRadius: 2,
-                        }}
+                        style={{flex: 1, minWidth: 0, height: '100%', objectFit: 'cover', borderRadius: 2}}
                       />
                     ) : (
-                      <div
-                        key={img._key}
-                        style={{flex: 1, background: '#222', borderRadius: 2}}
-                      />
+                      <div key={img._key} style={{flex: 1, background: '#222', borderRadius: 2}} />
                     )
                   })
                 )}
@@ -184,29 +212,113 @@ export function SectionList({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '6px 8px',
+                  gap: 6,
+                  padding: '5px 8px',
                 }}
               >
-                <div style={{display: 'flex', alignItems: 'center', gap: 6, minWidth: 0}}>
+                <DragHandle />
+
+                {/* Section number */}
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    color: '#333',
+                    background: '#222',
+                    borderRadius: 3,
+                    padding: '1px 5px',
+                    flexShrink: 0,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  #{i + 1}
+                </span>
+
+                {/* Name / editable label */}
+                {isEditingName ? (
+                  <input
+                    ref={nameInputRef}
+                    value={editingNameValue}
+                    autoFocus
+                    onChange={e => setEditingNameValue(e.target.value)}
+                    onBlur={commitName}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') commitName()
+                      if (e.key === 'Escape') setEditingNameKey(null)
+                      e.stopPropagation()
+                    }}
+                    onClick={e => e.stopPropagation()}
+                    placeholder="Section name…"
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      background: '#0d0d0d',
+                      border: '1px solid #3b82f6',
+                      borderRadius: 3,
+                      color: '#ddd',
+                      fontSize: 11,
+                      padding: '2px 5px',
+                      outline: 'none',
+                    }}
+                  />
+                ) : (
+                  <div style={{flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 4}}>
+                    <span
+                      onClick={e => startEditing(section, e)}
+                      title="Click to rename"
+                      style={{
+                        fontSize: 11,
+                        color: section.name
+                          ? (isSelected ? '#e26012' : '#aaa')
+                          : '#444',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        cursor: 'text',
+                        fontStyle: section.name ? 'normal' : 'italic',
+                        minWidth: 0,
+                      }}
+                    >
+                      {section.name || 'Untitled'}
+                    </span>
+                    {!section.name && isHovered && (
+                      <span style={{fontSize: 9, color: '#3b82f6', flexShrink: 0}}>rename</span>
+                    )}
+                  </div>
+                )}
+
+                {/* Row badge */}
+                {section.sectionRow != null && (
                   <span
                     style={{
-                      fontSize: 10,
+                      fontSize: 9,
                       fontWeight: 700,
-                      letterSpacing: '0.05em',
-                      color: isSelected ? '#e26012' : '#666',
-                      textTransform: 'uppercase',
+                      background: '#1a2a1a',
+                      color: '#4ade80',
+                      borderRadius: 3,
+                      padding: '1px 5px',
                       flexShrink: 0,
                     }}
                   >
-                    {LAYOUT_LABELS[section.layoutType] ?? section.layoutType}
+                    R{section.sectionRow} · {section.sectionWidth ?? 50}%
                   </span>
-                  <span style={{fontSize: 10, color: '#333'}}>
-                    · {section.images.length} {section.images.length === 1 ? 'image' : 'images'}
-                  </span>
-                </div>
+                )}
 
-                {/* Context menu button */}
+                {/* Layout badge */}
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
+                    color: isSelected ? '#e26012' : '#444',
+                    textTransform: 'uppercase',
+                    flexShrink: 0,
+                  }}
+                >
+                  {LAYOUT_LABELS[section.layoutType] ?? section.layoutType}
+                </span>
+
+                {/* Context menu */}
                 {(isHovered || isSelected || openMenuKey === section._key) && (
                   <div style={{position: 'relative', flexShrink: 0}}>
                     <button
@@ -219,7 +331,7 @@ export function SectionList({
                         border: 'none',
                         cursor: 'pointer',
                         color: '#555',
-                        fontSize: 16,
+                        fontSize: 15,
                         lineHeight: 1,
                         padding: '0 2px',
                         borderRadius: 3,
@@ -238,12 +350,34 @@ export function SectionList({
                           border: '1px solid #333',
                           borderRadius: 6,
                           zIndex: 100,
-                          minWidth: 130,
+                          minWidth: 140,
                           boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
                           overflow: 'hidden',
                         }}
                         onClick={e => e.stopPropagation()}
                       >
+                        <button
+                          onClick={() => { startEditing(section, {stopPropagation: () => {}} as React.MouseEvent); setOpenMenuKey(null) }}
+                          style={menuItemStyle}
+                        >
+                          Rename…
+                        </button>
+                        <div style={{height: 1, background: '#2a2a2a', margin: '2px 0'}} />
+                        <button
+                          disabled={i === 0}
+                          onClick={() => { onReorder(i, i - 1); setOpenMenuKey(null) }}
+                          style={{...menuItemStyle, color: i === 0 ? '#333' : '#ccc', cursor: i === 0 ? 'default' : 'pointer'}}
+                        >
+                          ↑ Move up
+                        </button>
+                        <button
+                          disabled={i === sections.length - 1}
+                          onClick={() => { onReorder(i, i + 1); setOpenMenuKey(null) }}
+                          style={{...menuItemStyle, color: i === sections.length - 1 ? '#333' : '#ccc', cursor: i === sections.length - 1 ? 'default' : 'pointer'}}
+                        >
+                          ↓ Move down
+                        </button>
+                        <div style={{height: 1, background: '#2a2a2a', margin: '2px 0'}} />
                         <button
                           onClick={() => { onDuplicate(section._key); setOpenMenuKey(null) }}
                           style={menuItemStyle}
