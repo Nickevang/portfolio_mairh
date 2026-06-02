@@ -1,4 +1,5 @@
 import {createClient, type ClientConfig} from 'next-sanity'
+import {draftMode} from 'next/headers'
 
 export const sanityProjectId: string | undefined = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
 export const sanityDataset: string | undefined = process.env.NEXT_PUBLIC_SANITY_DATASET
@@ -23,6 +24,20 @@ export function getSanityClient() {
 export async function sanityFetch<T>(query: string, params: Record<string, unknown> = {}) {
   const client = getSanityClient()
   if (!client) return [] as T
-  return client.fetch<T>(query, params, { next: { revalidate: 60 } })
+
+  const {isEnabled} = await draftMode()
+
+  if (isEnabled) {
+    return client
+      .withConfig({
+        token: process.env.SANITY_API_READ_TOKEN,
+        perspective: 'previewDrafts',
+        useCdn: false,
+        stega: {enabled: true, studioUrl: '/studio'},
+      })
+      .fetch<T>(query, params)
+  }
+
+  return client.fetch<T>(query, params, {next: {revalidate: 60}})
 }
 

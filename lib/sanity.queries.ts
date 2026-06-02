@@ -2,6 +2,32 @@ import type {SanityImageSource} from './sanity.image'
 
 // ─── TypeScript Interfaces ────────────────────────────────────────────────────
 
+export type {LayoutType} from '@/components/gallery/types'
+
+export interface SectionImage {
+  _key: string
+  asset: SanityImageSource
+  lqip: string | null
+  dimensions: {width: number; height: number} | null
+  colSpan: number | null
+  featured: boolean | null
+  widthCap: 'contained' | 'full' | null
+  focalPoint: {x: number; y: number} | null
+}
+
+export interface ProjectSection {
+  _key: string
+  layoutType: string
+  images: SectionImage[]
+  rowHeight: number | null
+  columnCount: number | null
+  autoplay: boolean | null
+  duration: number | null
+  heroIndex: number | null
+  supportCount: number | null
+  thumbHeight: number | null
+}
+
 export interface ProjectListItem {
   _id: string
   title: string
@@ -43,6 +69,7 @@ export interface ProjectDetail {
   muxPlaybackId: string | null
   galleryLayout: 'mixed' | 'masonry' | '2-col' | '3-col' | 'custom' | null
   gallery: GalleryImage[] | null
+  sections: ProjectSection[] | null
   subprojects: SubprojectItem[] | null
   description: unknown[] | null
   publishedAt: string | null
@@ -157,6 +184,29 @@ export const projectBySlugQuery = /* groq */ `
       mediaType,
       coverImage,
       "lqip": coverImage.asset->metadata.lqip
+    },
+    "sections": sections[] {
+      _key,
+      layoutType,
+      rowHeight,
+      columnCount,
+      autoplay,
+      duration,
+      heroIndex,
+      supportCount,
+      thumbHeight,
+      images[defined(asset._ref)] {
+        _key,
+        asset,
+        hotspot,
+        crop,
+        colSpan,
+        featured,
+        widthCap,
+        focalPoint,
+        "lqip": asset->metadata.lqip,
+        "dimensions": asset->metadata.dimensions
+      }
     },
     description,
     publishedAt

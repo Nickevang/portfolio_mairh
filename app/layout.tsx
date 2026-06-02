@@ -7,6 +7,8 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { sanityFetch } from "@/lib/sanity.client";
 import { siteSettingsQuery, type SiteSettings } from "@/lib/sanity.queries";
+import { draftMode } from "next/headers";
+import { VisualEditing } from "next-sanity/visual-editing";
 
 const geistSans = Geist({
   variable: "--font-geist",
@@ -103,6 +105,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const settings = await sanityFetch<SiteSettings>(siteSettingsQuery);
+  const {isEnabled: isDraft} = await draftMode();
 
   const scheme = settings?.colorScheme ?? 'dark'
   const fontKey = settings?.fontFamily ?? 'geist'
@@ -133,6 +136,7 @@ export default async function RootLayout({
         <main className="flex-1">{children}</main>
         <Footer />
         <Analytics />
+        {isDraft && <VisualEditing />}
       </body>
     </html>
   );

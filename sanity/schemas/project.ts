@@ -125,6 +125,15 @@ export const project = defineType({
       hidden: ({document}) => document?.mediaType !== 'photo',
     }),
     defineField({
+      name: 'sections',
+      title: 'Gallery Sections',
+      description:
+        'New per-section gallery with 8 layout options. When populated, replaces the legacy Gallery on the live site. Use "Convert Gallery → Sections" to migrate existing images.',
+      type: 'array',
+      of: [{type: 'gallerySection'}],
+      hidden: ({document}) => document?.mediaType !== 'photo',
+    }),
+    defineField({
       name: 'description',
       title: 'Description',
       type: 'array',

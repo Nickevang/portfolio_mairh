@@ -9,6 +9,8 @@ import {projectBySlugQuery, projectSlugsQuery, type ProjectDetail} from '@/lib/s
 import {MuxPlayer} from '@/components/MuxPlayer'
 import {GalleryGrid, type GalleryItem, type GalleryLayout} from '@/components/GalleryGrid'
 import {ProjectCard, type ProjectCardData} from '@/components/project-card'
+import {Gallery} from '@/components/gallery/Gallery'
+import type {RenderedSection, RenderedImage} from '@/components/gallery/types'
 
 interface Props {
   params: Promise<{slug: string}>
@@ -40,6 +42,35 @@ export default async function ProjectPage({params}: Props) {
 
   if (!project || !project._id) notFound()
 
+  // Transform raw sections into rendered sections with pre-built URLs
+  const renderedSections: RenderedSection[] | null =
+    project.sections && project.sections.length > 0
+      ? project.sections.map((section) => ({
+          _key: section._key,
+          layoutType: section.layoutType as RenderedSection['layoutType'],
+          rowHeight: section.rowHeight ?? undefined,
+          columnCount: section.columnCount ?? undefined,
+          autoplay: section.autoplay ?? undefined,
+          duration: section.duration ?? undefined,
+          heroIndex: section.heroIndex ?? undefined,
+          supportCount: section.supportCount ?? undefined,
+          thumbHeight: section.thumbHeight ?? undefined,
+          images: (section.images ?? []).map((img, i): RenderedImage => ({
+            _key: img._key,
+            src: urlForImage(img.asset).width(1200).url(),
+            fullSrc: urlForImage(img.asset).width(2400).url(),
+            width: img.dimensions?.width ?? 1200,
+            height: img.dimensions?.height ?? 900,
+            alt: `${project.title} — ${i + 1}`,
+            lqip: img.lqip ?? undefined,
+            colSpan: img.colSpan ?? undefined,
+            featured: img.featured ?? undefined,
+            widthCap: img.widthCap ?? undefined,
+            focalPoint: img.focalPoint ?? undefined,
+          })),
+        }))
+      : null
+
   const publishedDate = project.publishedAt
     ? new Intl.DateTimeFormat('en-US', {year: 'numeric', month: 'long'}).format(
         new Date(project.publishedAt),
@@ -63,23 +94,11 @@ export default async function ProjectPage({params}: Props) {
         </div>
       ) : (
         <div className="mb-10">
-          {/* Cover image when no gallery */}
-          {(!project.gallery || project.gallery.length === 0) && project.coverImage && (
-            <div className="relative aspect-[3/2] w-full overflow-hidden rounded-2xl border border-white/10">
-              <Image
-                src={urlForImage(project.coverImage).width(1600).height(1067).fit('crop').url()}
-                alt={project.title}
-                fill
-                className="object-cover"
-                placeholder={project.lqip ? 'blur' : 'empty'}
-                blurDataURL={project.lqip ?? undefined}
-                priority
-              />
-            </div>
-          )}
+          {/* New sections-based gallery */}
+          {renderedSections && <Gallery sections={renderedSections} />}
 
-          {/* Gallery grid */}
-          {project.gallery && project.gallery.length > 0 && (() => {
+          {/* Legacy flat gallery (backward compat) */}
+          {!renderedSections && project.gallery && project.gallery.length > 0 && (() => {
             const galleryItems: GalleryItem[] = project.gallery!
               .filter((img) => img.asset)
               .map((img, i) => ({
@@ -96,6 +115,21 @@ export default async function ProjectPage({params}: Props) {
             const layout = (project.galleryLayout ?? 'mixed') as GalleryLayout
             return <GalleryGrid items={galleryItems} layout={layout} />
           })()}
+
+          {/* Cover image fallback when no gallery at all */}
+          {!renderedSections && (!project.gallery || project.gallery.length === 0) && project.coverImage && (
+            <div className="relative aspect-[3/2] w-full overflow-hidden rounded-2xl border border-white/10">
+              <Image
+                src={urlForImage(project.coverImage).width(1600).height(1067).fit('crop').url()}
+                alt={project.title}
+                fill
+                className="object-cover"
+                placeholder={project.lqip ? 'blur' : 'empty'}
+                blurDataURL={project.lqip ?? undefined}
+                priority
+              />
+            </div>
+          )}
         </div>
       )}
 
