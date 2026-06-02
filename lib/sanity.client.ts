@@ -25,9 +25,15 @@ export async function sanityFetch<T>(query: string, params: Record<string, unkno
   const client = getSanityClient()
   if (!client) return [] as T
 
-  const {isEnabled} = await draftMode()
+  let isDraft = false
+  try {
+    const dm = await draftMode()
+    isDraft = dm.isEnabled
+  } catch {
+    // draftMode() throws at build time (generateStaticParams has no request context)
+  }
 
-  if (isEnabled) {
+  if (isDraft) {
     return client
       .withConfig({
         token: process.env.SANITY_API_READ_TOKEN,
