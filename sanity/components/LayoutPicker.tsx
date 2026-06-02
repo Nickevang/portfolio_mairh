@@ -16,6 +16,7 @@ const stroke = '#666'
 const fill = '#333'
 
 const LAYOUTS: Layout[] = [
+  // ── Original 8 ──────────────────────────────────────────────────────────────
   {
     value: 'uniformGrid',
     label: 'Uniform Grid',
@@ -150,20 +151,96 @@ const LAYOUTS: Layout[] = [
     icon: (
       <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
         {[0, 1, 2, 3, 4].map((i) => (
-          <rect
-            key={i}
-            x={4 + i * 16}
-            y={14}
-            width={13}
-            height={28}
-            rx={2}
-            fill={fill}
-            stroke={stroke}
-            strokeWidth={1}
-          />
+          <rect key={i} x={4 + i * 16} y={14} width={13} height={28} rx={2} fill={fill} stroke={stroke} strokeWidth={1} />
         ))}
         <line x1={2} y1={28} x2={78} y2={28} stroke={stroke} strokeWidth={0.5} strokeDasharray="3,2" />
-        <line x1={2} y1={28} x2={78} y2={28} stroke={stroke} strokeWidth={0.5} strokeDasharray="3,2" />
+      </svg>
+    ),
+  },
+  // ── New layouts ──────────────────────────────────────────────────────────────
+  {
+    value: 'album',
+    label: 'Album',
+    sub: 'focus + navigator',
+    icon: (
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+        {/* large focus area */}
+        <rect x={4} y={4} width={50} height={48} rx={2} fill={fill} stroke={stroke} strokeWidth={1} />
+        {/* thumbnail strip */}
+        {[0,1,2,3].map(i => <rect key={i} x={60} y={4 + i * 13} width={16} height={11} rx={1} fill={fill} stroke={stroke} strokeWidth={1} />)}
+      </svg>
+    ),
+  },
+  {
+    value: 'editorial',
+    label: 'Editorial',
+    sub: 'magazine spread',
+    icon: (
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+        {/* hero */}
+        <rect x={4} y={4} width={42} height={48} rx={2} fill={fill} stroke={stroke} strokeWidth={1} />
+        {/* supporting stack */}
+        {[0,1,2].map(i => <rect key={i} x={50} y={4 + i * 17} width={26} height={14} rx={1} fill={fill} stroke={stroke} strokeWidth={1} />)}
+      </svg>
+    ),
+  },
+  {
+    value: 'diptych',
+    label: 'Diptych',
+    sub: 'always pairs',
+    icon: (
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+        <rect x={4}  y={4}  width={33} height={22} rx={2} fill={fill} stroke={stroke} strokeWidth={1} />
+        <rect x={43} y={4}  width={33} height={22} rx={2} fill={fill} stroke={stroke} strokeWidth={1} />
+        <rect x={4}  y={30} width={33} height={22} rx={2} fill={fill} stroke={stroke} strokeWidth={1} />
+        <rect x={43} y={30} width={33} height={22} rx={2} fill={fill} stroke={stroke} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  {
+    value: 'bento',
+    label: 'Bento',
+    sub: 'bento box grid',
+    icon: (
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+        {/* big left */}
+        <rect x={4}  y={4}  width={32} height={32} rx={2} fill={fill} stroke={stroke} strokeWidth={1} />
+        {/* 2x2 right */}
+        <rect x={40} y={4}  width={16} height={14} rx={1} fill={fill} stroke={stroke} strokeWidth={1} />
+        <rect x={60} y={4}  width={16} height={14} rx={1} fill={fill} stroke={stroke} strokeWidth={1} />
+        <rect x={40} y={22} width={16} height={14} rx={1} fill={fill} stroke={stroke} strokeWidth={1} />
+        <rect x={60} y={22} width={16} height={14} rx={1} fill={fill} stroke={stroke} strokeWidth={1} />
+        {/* full-width bottom */}
+        <rect x={4}  y={40} width={72} height={14} rx={2} fill={fill} stroke={stroke} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  {
+    value: 'scatter',
+    label: 'Scatter',
+    sub: 'polaroid style',
+    icon: (
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+        <g transform="rotate(-8,20,28)"><rect x={4}  y={14} width={28} height={24} rx={1} fill={fill} stroke={stroke} strokeWidth={1} /></g>
+        <g transform="rotate(5,52,28)"><rect x={24} y={8}  width={28} height={24} rx={1} fill={fill} stroke={stroke} strokeWidth={1} /></g>
+        <g transform="rotate(-4,38,40)"><rect x={14} y={28} width={28} height={24} rx={1} fill={fill} stroke={stroke} strokeWidth={1} /></g>
+      </svg>
+    ),
+  },
+  {
+    value: 'panorama',
+    label: 'Panorama',
+    sub: 'full-height scroll',
+    icon: (
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+        {[
+          {x:4,  w:20},
+          {x:28, w:14},
+          {x:46, w:22},
+          {x:72, w:12},
+        ].map((r,i) => (
+          <rect key={i} x={r.x} y={4} width={r.w} height={48} rx={2} fill={fill} stroke={stroke} strokeWidth={1} />
+        ))}
       </svg>
     ),
   },

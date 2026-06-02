@@ -13,6 +13,13 @@ export const gallerySection = defineType({
       type: 'string',
       components: {input: LayoutPicker},
       initialValue: 'uniformGrid',
+      options: {
+        list: [
+          'uniformGrid','masonry','justified','customGrid',
+          'slideshow','cinematic','mosaic','filmstrip',
+          'album','editorial','diptych','bento','scatter','panorama',
+        ],
+      },
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -154,6 +161,79 @@ export const gallerySection = defineType({
       initialValue: 220,
       hidden: ({parent}) => parent?.layoutType !== 'filmstrip',
     }),
+
+    // ── Album settings ────────────────────────────────────────────────
+    defineField({
+      name: 'thumbnailPosition',
+      title: 'Thumbnail Strip Position',
+      description: 'Where the thumbnail navigator appears relative to the main focus image.',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Right side', value: 'right'},
+          {title: 'Below', value: 'bottom'},
+        ],
+        layout: 'radio',
+        direction: 'horizontal',
+      },
+      initialValue: 'right',
+      hidden: ({parent}) => parent?.layoutType !== 'album',
+    }),
+    defineField({
+      name: 'thumbnailSize',
+      title: 'Thumbnail Size (px)',
+      type: 'number',
+      initialValue: 88,
+      description: 'Width and height of each thumbnail in the strip.',
+      hidden: ({parent}) => parent?.layoutType !== 'album',
+    }),
+
+    // ── Editorial settings ────────────────────────────────────────────
+    defineField({
+      name: 'heroSide',
+      title: 'Hero Image Side',
+      description: 'Which side the large hero image appears on.',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Left', value: 'left'},
+          {title: 'Right', value: 'right'},
+        ],
+        layout: 'radio',
+        direction: 'horizontal',
+      },
+      initialValue: 'left',
+      hidden: ({parent}) => parent?.layoutType !== 'editorial',
+    }),
+
+    // ── Bento settings ────────────────────────────────────────────────
+    defineField({
+      name: 'bentoTemplate',
+      title: 'Bento Template',
+      description: 'A = 6 images (1 big + 4 + 1 full). B = 5 images (2x2 + wide). C = 7 images (asymmetric).',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'A — 6 images', value: 'A'},
+          {title: 'B — 5 images', value: 'B'},
+          {title: 'C — 7 images', value: 'C'},
+        ],
+        layout: 'radio',
+        direction: 'horizontal',
+      },
+      initialValue: 'A',
+      hidden: ({parent}) => parent?.layoutType !== 'bento',
+    }),
+
+    // ── Panorama settings ─────────────────────────────────────────────
+    defineField({
+      name: 'panoramaHeight',
+      title: 'Strip Height (px)',
+      type: 'number',
+      initialValue: 380,
+      description: 'Fixed height of the horizontal panorama strip.',
+      hidden: ({parent}) => parent?.layoutType !== 'panorama',
+    }),
   ],
   preview: {
     select: {
@@ -170,6 +250,12 @@ export const gallerySection = defineType({
         cinematic: 'Cinematic',
         mosaic: 'Mosaic',
         filmstrip: 'Filmstrip',
+        album: 'Album',
+        editorial: 'Editorial',
+        diptych: 'Diptych',
+        bento: 'Bento',
+        scatter: 'Scatter',
+        panorama: 'Panorama',
       }
       return {
         title: labels[layoutType ?? ''] ?? 'Section',

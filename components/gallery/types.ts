@@ -9,6 +9,13 @@ export type LayoutType =
   | 'cinematic'
   | 'mosaic'
   | 'filmstrip'
+  // New layouts
+  | 'album'      // focus view + thumbnail navigator strip (side or below)
+  | 'editorial'  // magazine spread: hero + stacked supporting images
+  | 'diptych'    // always pairs, two images per row
+  | 'bento'      // bento box grid with predefined templates A/B/C
+  | 'scatter'    // polaroid-style, images at slight random rotations
+  | 'panorama'   // full-height horizontal scroll strip
 
 export interface GalleryImage {
   _key: string
@@ -43,6 +50,15 @@ export interface Section {
   supportCount?: number
   // filmstrip
   thumbHeight?: number
+  // album
+  thumbnailPosition?: 'right' | 'bottom'
+  thumbnailSize?: number
+  // editorial
+  heroSide?: 'left' | 'right'
+  // bento
+  bentoTemplate?: 'A' | 'B' | 'C'
+  // panorama
+  panoramaHeight?: number
 }
 
 // ── Rendered types (client-side renderers) ───────────────────────────────────
@@ -73,4 +89,10 @@ export interface RenderedSection {
   heroIndex?: number
   supportCount?: number
   thumbHeight?: number
+  // New layout fields
+  thumbnailPosition?: 'right' | 'bottom'
+  thumbnailSize?: number
+  heroSide?: 'left' | 'right'
+  bentoTemplate?: 'A' | 'B' | 'C'
+  panoramaHeight?: number
 }

@@ -26,6 +26,12 @@ export interface ProjectSection {
   heroIndex: number | null
   supportCount: number | null
   thumbHeight: number | null
+  // New layout fields
+  thumbnailPosition: 'right' | 'bottom' | null
+  thumbnailSize: number | null
+  heroSide: 'left' | 'right' | null
+  bentoTemplate: 'A' | 'B' | 'C' | null
+  panoramaHeight: number | null
 }
 
 export interface ProjectListItem {
@@ -195,6 +201,11 @@ export const projectBySlugQuery = /* groq */ `
       heroIndex,
       supportCount,
       thumbHeight,
+      thumbnailPosition,
+      thumbnailSize,
+      heroSide,
+      bentoTemplate,
+      panoramaHeight,
       images[defined(asset._ref)] {
         _key,
         asset,

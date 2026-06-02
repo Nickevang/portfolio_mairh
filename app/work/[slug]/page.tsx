@@ -55,6 +55,11 @@ export default async function ProjectPage({params}: Props) {
           heroIndex: section.heroIndex ?? undefined,
           supportCount: section.supportCount ?? undefined,
           thumbHeight: section.thumbHeight ?? undefined,
+          thumbnailPosition: section.thumbnailPosition ?? undefined,
+          thumbnailSize: section.thumbnailSize ?? undefined,
+          heroSide: section.heroSide ?? undefined,
+          bentoTemplate: section.bentoTemplate ?? undefined,
+          panoramaHeight: section.panoramaHeight ?? undefined,
           images: (section.images ?? []).map((img, i): RenderedImage => ({
             _key: img._key,
             src: urlForImage(img.asset).width(1200).url(),

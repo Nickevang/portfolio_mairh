@@ -5,6 +5,7 @@ import {presentationTool} from 'sanity/presentation'
 
 import {schemaTypes} from './sanity/schemas'
 import {MigrateToSectionsAction} from './sanity/actions/migrateToSections'
+import {GalleryEditorView} from './sanity/components/GalleryEditor'
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || 'missing'
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || 'production'
@@ -20,6 +21,15 @@ export default defineConfig({
 
   plugins: [
     deskTool({
+      defaultDocumentNode: (S, {schemaType}) => {
+        if (schemaType === 'project') {
+          return S.document().views([
+            S.view.form().title('Edit'),
+            S.view.component(GalleryEditorView).title('Gallery Editor'),
+          ])
+        }
+        return S.document()
+      },
       structure: (S) =>
         S.list()
           .title('Content')
