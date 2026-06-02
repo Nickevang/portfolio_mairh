@@ -36,6 +36,7 @@ export default defineConfig({
     }),
     presentationTool({
       previewUrl: {
+        origin: typeof location !== 'undefined' ? location.origin : 'https://portfolio-mairh.vercel.app',
         previewMode: {
           enable: '/api/draft',
           disable: '/api/draft?disable=1',

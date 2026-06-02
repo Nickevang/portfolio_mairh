@@ -1,5 +1,15 @@
 import {draftMode} from 'next/headers'
 import {redirect} from 'next/navigation'
+import {createClient} from 'next-sanity'
+import {validatePreviewUrl} from '@sanity/preview-url-secret'
+
+const client = createClient({
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || 'production',
+  apiVersion: '2025-02-19',
+  useCdn: false,
+  token: process.env.SANITY_API_READ_TOKEN,
+})
 
 export async function GET(request: Request) {
   const {searchParams} = new URL(request.url)
@@ -10,17 +20,13 @@ export async function GET(request: Request) {
     redirect('/')
   }
 
-  // Sanity Presentation tool sends 'sanity-preview-secret'; fall back to 'secret' for manual use
-  const secret = searchParams.get('sanity-preview-secret') ?? searchParams.get('secret')
-  if (secret !== process.env.SANITY_PREVIEW_SECRET) {
+  const {isValid, redirectTo = '/'} = await validatePreviewUrl(client, request.url)
+
+  if (!isValid) {
     return new Response('Invalid secret', {status: 401})
   }
 
   const draft = await draftMode()
   draft.enable()
-
-  // Sanity sends 'sanity-preview-pathname'; fall back to 'redirect'
-  const redirectTo =
-    searchParams.get('sanity-preview-pathname') ?? searchParams.get('redirect') ?? '/'
   redirect(redirectTo)
 }
