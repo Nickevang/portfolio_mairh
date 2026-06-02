@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react'
+import {useEffect, useRef, useState} from 'react'
 import {useClient} from 'sanity'
 import imageUrlBuilder from '@sanity/image-url'
 import {GalleryEditorView} from '../../components/GalleryEditor'
@@ -16,12 +16,20 @@ export function GalleryEditorTool() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [doc, setDoc] = useState<Record<string, unknown> | null>(null)
   const [loading, setLoading] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  // Fetch project list
+  // Fetch project list — deduplicate so drafts don't appear alongside their published version
   useEffect(() => {
     client
       .fetch<Project[]>('*[_type == "project"] | order(title asc) {_id, title, coverImage}')
-      .then(setProjects)
+      .then(all => {
+        const seen = new Map<string, Project>()
+        all.forEach(p => {
+          const baseId = p._id.replace(/^drafts\./, '')
+          if (!seen.has(baseId)) seen.set(baseId, {...p, _id: baseId})
+        })
+        setProjects(Array.from(seen.values()))
+      })
   }, [client])
 
   // Listen to selected project document (prefer draft)
@@ -43,7 +51,10 @@ export function GalleryEditorTool() {
     const sub = client
       .listen(`*[_id == $draftId || _id == $pubId]`, {draftId, pubId})
       .subscribe(() => {
-        client.fetch(q, {draftId, pubId}).then(setDoc)
+        clearTimeout(debounceRef.current)
+        debounceRef.current = setTimeout(() => {
+          client.fetch(q, {draftId, pubId}).then(setDoc)
+        }, 400)
       })
 
     return () => sub.unsubscribe()

@@ -30,7 +30,10 @@ function displaySizeToColSpan(displaySize: string | undefined): number {
 export function GalleryEditorView({document: {displayed}, documentId, schemaType}: GalleryEditorProps) {
   const client = useClient({apiVersion: '2024-01-01'})
   const builder = imageUrlBuilder(client)
-  const {patch} = useDocumentOperation(documentId, schemaType.name)
+  const ops = useDocumentOperation(documentId, schemaType.name)
+  const {patch} = ops
+  // publish op: disabled is false when there are unpublished changes
+  const publishOp = ops.publish as unknown as {execute: () => void; disabled: false | string}
 
   const serverSections = (displayed?.sections as GallerySection[] | undefined) ?? []
   const legacyImages = (displayed?.gallery as LegacyImage[] | undefined) ?? []
@@ -43,16 +46,19 @@ export function GalleryEditorView({document: {displayed}, documentId, schemaType
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [uploading, setUploading] = useState(false)
   const prevTimestamp = useRef(serverTimestamp)
+  const lastPatchTime = useRef(0)
 
-  // Sync local state when external edits arrive (Edit tab, migration action, etc.)
+  // Sync from server only when someone else edited (not our own patch)
   useEffect(() => {
     if (prevTimestamp.current !== serverTimestamp) {
       prevTimestamp.current = serverTimestamp
-      setSections(serverSections)
-      setSelectedKey(k => {
-        const still = serverSections.find(s => s._key === k)
-        return still ? k : (serverSections[0]?._key ?? null)
-      })
+      if (Date.now() - lastPatchTime.current > 2000) {
+        setSections(serverSections)
+        setSelectedKey(k => {
+          const still = serverSections.find(s => s._key === k)
+          return still ? k : (serverSections[0]?._key ?? null)
+        })
+      }
     }
   }, [serverTimestamp]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -67,6 +73,7 @@ export function GalleryEditorView({document: {displayed}, documentId, schemaType
 
   function commit(next: GallerySection[]) {
     setSections(next)
+    lastPatchTime.current = Date.now()
     patch.execute([{set: {sections: next}}])
   }
 
@@ -252,63 +259,74 @@ export function GalleryEditorView({document: {displayed}, documentId, schemaType
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 16px',
-          height: 36,
+          padding: '0 12px',
+          height: 40,
           borderBottom: '1px solid #1e1e1e',
           background: '#0d0d0d',
           flexShrink: 0,
+          gap: 10,
         }}
       >
-        <span style={{fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3a3a3a'}}>
-          Gallery Editor
+        <span style={{fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#3a3a3a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1}}>
+          {(displayed?.title as string | undefined) ?? 'Gallery Editor'}
         </span>
-        <button
-          onClick={() => setIsFullscreen(f => !f)}
-          title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Expand to fullscreen'}
-          style={{
-            background: 'none',
-            border: '1px solid #2a2a2a',
-            borderRadius: 4,
-            color: '#555',
-            cursor: 'pointer',
-            fontSize: 11,
-            padding: '3px 10px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 5,
-            transition: 'border-color 0.1s, color 0.1s',
-          }}
-          onMouseEnter={e => {
-            ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#555'
-            ;(e.currentTarget as HTMLButtonElement).style.color = '#aaa'
-          }}
-          onMouseLeave={e => {
-            ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#2a2a2a'
-            ;(e.currentTarget as HTMLButtonElement).style.color = '#555'
-          }}
-        >
-          {isFullscreen ? (
-            <>
+
+        <div style={{display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0}}>
+          {/* Publish button */}
+          <button
+            onClick={() => { if (publishOp.disabled === false) publishOp.execute() }}
+            title={publishOp.disabled === false ? 'Publish changes to the live site' : 'No unpublished changes'}
+            style={{
+              background: publishOp.disabled === false ? '#e26012' : 'transparent',
+              color: publishOp.disabled === false ? '#fff' : '#333',
+              border: `1px solid ${publishOp.disabled === false ? '#e26012' : '#222'}`,
+              borderRadius: 4,
+              fontSize: 11,
+              fontWeight: 700,
+              padding: '4px 12px',
+              cursor: publishOp.disabled === false ? 'pointer' : 'default',
+              letterSpacing: '0.04em',
+              transition: 'all 0.15s',
+            }}
+          >
+            {publishOp.disabled === false ? 'Publish' : '✓ Live'}
+          </button>
+
+          {/* Fullscreen toggle */}
+          <button
+            onClick={() => setIsFullscreen(f => !f)}
+            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            style={{
+              background: 'none',
+              border: '1px solid #2a2a2a',
+              borderRadius: 4,
+              color: '#555',
+              cursor: 'pointer',
+              fontSize: 11,
+              padding: '3px 8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            {isFullscreen ? (
               <svg width={11} height={11} viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <polyline points="7,0 11,0 11,4"/>
                 <polyline points="4,11 0,11 0,7"/>
                 <line x1="11" y1="0" x2="6.5" y2="4.5"/>
                 <line x1="0" y1="11" x2="4.5" y2="6.5"/>
               </svg>
-              Exit fullscreen
-            </>
-          ) : (
-            <>
+            ) : (
               <svg width={11} height={11} viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <polyline points="7,4 11,4 11,0"/>
                 <polyline points="4,7 0,7 0,11"/>
                 <line x1="11" y1="0" x2="6.5" y2="4.5"/>
                 <line x1="0" y1="11" x2="4.5" y2="6.5"/>
               </svg>
-              Fullscreen
-            </>
-          )}
-        </button>
+            )}
+            {isFullscreen ? 'Exit' : 'Fullscreen'}
+          </button>
+        </div>
       </div>
 
       {/* Migration banner */}

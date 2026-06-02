@@ -30,6 +30,161 @@ interface Props {
   onRename: (key: string, name: string) => void
 }
 
+// ── Page Map ──────────────────────────────────────────────────────────────────
+// Visual overview of the page layout — shows which sections are side-by-side.
+
+type RowGroup = {rowId: string; isSolo: boolean; sections: GallerySection[]}
+
+function PageMap({
+  sections,
+  selectedKey,
+  imgUrl,
+  onSelect,
+}: {
+  sections: GallerySection[]
+  selectedKey: string | null
+  imgUrl: (ref: string, w: number) => string
+  onSelect: (key: string) => void
+}) {
+  if (sections.length === 0) return null
+
+  const groups: RowGroup[] = []
+  sections.forEach(s => {
+    if (s.sectionRow == null) {
+      groups.push({rowId: `solo-${s._key}`, isSolo: true, sections: [s]})
+    } else {
+      const existing = groups.find(g => g.rowId === `row-${s.sectionRow}`)
+      if (existing) existing.sections.push(s)
+      else groups.push({rowId: `row-${s.sectionRow}`, isSolo: false, sections: [s]})
+    }
+  })
+
+  const selectedSection = sections.find(s => s._key === selectedKey)
+  const selectedRow = selectedSection?.sectionRow
+
+  return (
+    <div
+      style={{
+        padding: '8px 8px 6px',
+        borderBottom: '1px solid #1a1a1a',
+        flexShrink: 0,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 9,
+          fontWeight: 700,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: '#2e2e2e',
+          marginBottom: 6,
+        }}
+      >
+        Page layout
+      </div>
+
+      {groups.map(group => {
+        const totalW = group.sections.reduce(
+          (acc, s) => acc + (s.sectionWidth ?? (group.isSolo ? 100 : 50)),
+          0,
+        )
+        const inSameRow =
+          !group.isSolo && selectedRow != null && group.sections[0]?.sectionRow === selectedRow
+
+        return (
+          <div
+            key={group.rowId}
+            style={{
+              display: 'flex',
+              gap: 3,
+              marginBottom: 4,
+              padding: inSameRow ? '2px' : '0',
+              borderRadius: 5,
+              background: inSameRow ? 'rgba(74,222,128,0.06)' : 'transparent',
+              border: inSameRow ? '1px solid rgba(74,222,128,0.15)' : '1px solid transparent',
+            }}
+          >
+            {group.sections.map(s => {
+              const w = s.sectionWidth ?? (group.isSolo ? 100 : 50)
+              const flex = w / totalW
+              const isSelected = s._key === selectedKey
+              const thumbRef = s.images[0]?.asset?._ref
+
+              return (
+                <div
+                  key={s._key}
+                  onClick={() => onSelect(s._key)}
+                  title={`${s.name ?? LAYOUT_LABELS[s.layoutType] ?? s.layoutType}${group.isSolo ? '' : ` · ${w}%`}`}
+                  style={{
+                    flex,
+                    minWidth: 0,
+                    height: 32,
+                    borderRadius: 4,
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    border: isSelected
+                      ? '1.5px solid #e26012'
+                      : inSameRow
+                        ? '1.5px solid rgba(74,222,128,0.3)'
+                        : '1.5px solid #1e1e1e',
+                    position: 'relative',
+                    background: '#0d0d0d',
+                    transition: 'border-color 0.1s',
+                  }}
+                >
+                  {thumbRef && (
+                    <img
+                      src={imgUrl(thumbRef, 80)}
+                      alt=""
+                      draggable={false}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        pointerEvents: 'none',
+                        opacity: 0.55,
+                      }}
+                    />
+                  )}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: isSelected ? 'rgba(226,96,18,0.35)' : undefined,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 7,
+                        fontWeight: 700,
+                        color: isSelected ? '#fff' : '#555',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        textShadow: '0 1px 3px rgba(0,0,0,0.9)',
+                        textAlign: 'center',
+                        padding: '0 2px',
+                      }}
+                    >
+                      {s.name
+                        ? s.name.slice(0, 8)
+                        : (LAYOUT_LABELS[s.layoutType] ?? s.layoutType).slice(0, 8)}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function DragHandle() {
   return (
     <svg
@@ -96,7 +251,7 @@ export function SectionList({
       {/* Header */}
       <div
         style={{
-          padding: '12px 16px 8px',
+          padding: '10px 16px 8px',
           flexShrink: 0,
           borderBottom: '1px solid #1e1e1e',
         }}
@@ -104,10 +259,18 @@ export function SectionList({
         <div style={{fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#555'}}>
           Sections
         </div>
-        <div style={{fontSize: 10, color: '#333', marginTop: 3}}>
-          Stack top → bottom on page · drag ⠿ to reorder
+        <div style={{fontSize: 10, color: '#2e2e2e', marginTop: 2}}>
+          Drag ⠿ to reorder · stacks top→bottom
         </div>
       </div>
+
+      {/* Page Map — visual overview of row layout */}
+      <PageMap
+        sections={sections}
+        selectedKey={selectedKey}
+        imgUrl={imgUrl}
+        onSelect={key => { onSelect(key); setOpenMenuKey(null) }}
+      />
 
       {/* Section cards */}
       <div style={{flex: 1, overflowY: 'auto', padding: '8px 8px 0'}}>
