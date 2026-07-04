@@ -76,6 +76,7 @@ export interface ProjectDetail {
   coverImage: SanityImageSource
   lqip: string | null
   muxPlaybackId: string | null
+  videoPlaybackIds: string[] | null
   galleryLayout: 'mixed' | 'masonry' | '2-col' | '3-col' | 'custom' | null
   gallery: GalleryImage[] | null
   sections: ProjectSection[] | null
@@ -159,7 +160,7 @@ export const siteSettingsQuery = /* groq */ `
 `
 
 export const projectsQuery = /* groq */ `
-  *[_type == "project"] | order(publishedAt desc) {
+  *[_type == "project" && mediaType != "video"] | order(publishedAt desc) {
     _id,
     title,
     "slug": slug.current,
@@ -179,6 +180,7 @@ export const projectBySlugQuery = /* groq */ `
     coverImage,
     "lqip": coverImage.asset->metadata.lqip,
     "muxPlaybackId": video.asset->data.playback_ids[0].id,
+    "videoPlaybackIds": videos[].asset->data.playback_ids[0].id,
     galleryLayout,
     gallery[defined(asset._ref)] {
       ...,

@@ -95,11 +95,22 @@ export default async function ProjectPage({params}: Props) {
       </header>
 
       {/* Media */}
-      {project.mediaType === 'video' && project.muxPlaybackId ? (
-        <div className="mb-10 overflow-hidden rounded-2xl border border-white/10">
-          <MuxPlayer playbackId={project.muxPlaybackId} />
-        </div>
-      ) : (
+      {project.mediaType === 'video' ? (() => {
+        const ids = project.videoPlaybackIds?.length
+          ? project.videoPlaybackIds
+          : project.muxPlaybackId
+            ? [project.muxPlaybackId]
+            : []
+        return ids.length > 0 ? (
+          <div className="mb-10 flex flex-col gap-6">
+            {ids.map((id) => (
+              <div key={id} className="overflow-hidden rounded-2xl border border-white/10">
+                <MuxPlayer playbackId={id} />
+              </div>
+            ))}
+          </div>
+        ) : null
+      })() : (
         <div className="mb-10">
           {/* New sections-based gallery */}
           {renderedSections && <Gallery sections={renderedSections} />}

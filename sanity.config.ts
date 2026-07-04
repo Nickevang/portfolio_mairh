@@ -1,7 +1,6 @@
 import {defineConfig} from 'sanity'
 import {deskTool} from 'sanity/desk'
 import {muxInput} from 'sanity-plugin-mux-input'
-import {presentationTool} from 'sanity/presentation'
 
 import {schemaTypes} from './sanity/schemas'
 import {MigrateToSectionsAction} from './sanity/actions/migrateToSections'
@@ -44,15 +43,6 @@ export default defineConfig({
     }),
     muxInput({
       video_quality: 'basic',
-    }),
-    presentationTool({
-      previewUrl: {
-        origin: typeof location !== 'undefined' ? location.origin : 'https://portfolio-mairh.vercel.app',
-        previewMode: {
-          enable: '/api/draft',
-          disable: '/api/draft?disable=1',
-        },
-      },
     }),
   ],
 

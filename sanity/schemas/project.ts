@@ -49,8 +49,16 @@ export const project = defineType({
     }),
     defineField({
       name: 'video',
-      title: 'Mux Video',
+      title: 'Mux Video (legacy)',
       type: 'mux.video',
+      hidden: true,
+    }),
+    defineField({
+      name: 'videos',
+      title: 'Videos',
+      type: 'array',
+      of: [{type: 'mux.video'}],
+      description: 'Upload all videos for this project here.',
       hidden: ({document}) => document?.mediaType !== 'video',
     }),
     defineField({
