@@ -14,10 +14,11 @@ export interface Slide {
   lqip?: string
 }
 
-const DWELL_MS  = 5500  // how long each photo is shown
-const SLIDE_MS  = 950   // transition duration
-const EASING    = `${SLIDE_MS}ms cubic-bezier(0.77, 0, 0.175, 1) both`
+const DWELL_MS       = 5500
+const SLIDE_MS       = 950
+const EASING         = `${SLIDE_MS}ms cubic-bezier(0.77, 0, 0.175, 1) both`
 const WHEEL_COOLDOWN = SLIDE_MS + 400
+const SWIPE_MIN      = 50   // px threshold to register a swipe
 
 type Dir = 'forward' | 'backward'
 
@@ -26,8 +27,12 @@ export function HeroSlideshow({slides}: {slides: Slide[]}) {
   const [outgoing, setOutgoing]   = useState<number | null>(null)
   const [dir, setDir]             = useState<Dir>('forward')
   const [animating, setAnimating] = useState(false)
-  const timer        = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const wheelLocked  = useRef(false)
+
+  const containerRef  = useRef<HTMLDivElement>(null)
+  const timer         = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const wheelLocked   = useRef(false)
+  const touchStartY   = useRef<number | null>(null)
+  const touchStartX   = useRef<number | null>(null)
 
   const clearAutoplay = () => {
     if (timer.current) clearTimeout(timer.current)
@@ -58,14 +63,14 @@ export function HeroSlideshow({slides}: {slides: Slide[]}) {
     [active, slides.length, goTo],
   )
 
-  // ── Autoplay ────────────────────────────────────────────────────────────
+  // ── Autoplay ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (slides.length <= 1) return
     timer.current = setTimeout(next, DWELL_MS)
     return clearAutoplay
   }, [active, next, slides.length])
 
-  // ── Keyboard ────────────────────────────────────────────────────────────
+  // ── Keyboard ─────────────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next()
@@ -75,25 +80,66 @@ export function HeroSlideshow({slides}: {slides: Slide[]}) {
     return () => window.removeEventListener('keydown', onKey)
   }, [next, prev])
 
-  // ── Mouse wheel ─────────────────────────────────────────────────────────
+  // ── Mouse wheel — attached to container, non-passive so we block page scroll
   useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
     const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
       if (wheelLocked.current) return
-      if (Math.abs(e.deltaY) < 20) return // ignore tiny trackpad nudges
+      if (Math.abs(e.deltaY) < 20) return
       wheelLocked.current = true
-      if (e.deltaY > 0) next()
-      else prev()
+      if (e.deltaY > 0) next(); else prev()
       setTimeout(() => { wheelLocked.current = false }, WHEEL_COOLDOWN)
     }
-    window.addEventListener('wheel', onWheel, {passive: true})
-    return () => window.removeEventListener('wheel', onWheel)
+    el.addEventListener('wheel', onWheel, {passive: false})
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [next, prev])
+
+  // ── Touch / swipe ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY
+      touchStartX.current = e.touches[0].clientX
+    }
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (touchStartY.current === null || touchStartX.current === null) return
+      const dy = Math.abs(e.touches[0].clientY - touchStartY.current)
+      const dx = Math.abs(e.touches[0].clientX - touchStartX.current)
+      // Only prevent page scroll when the gesture is primarily vertical
+      if (dy > dx) e.preventDefault()
+    }
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (touchStartY.current === null) return
+      const deltaY = touchStartY.current - e.changedTouches[0].clientY
+      const deltaX = touchStartX.current! - e.changedTouches[0].clientX
+      touchStartY.current = null
+      touchStartX.current = null
+      // Only navigate if vertical swipe dominates horizontal
+      if (Math.abs(deltaY) < SWIPE_MIN || Math.abs(deltaX) > Math.abs(deltaY)) return
+      if (deltaY > 0) next(); else prev()
+    }
+
+    el.addEventListener('touchstart', onTouchStart, {passive: true})
+    el.addEventListener('touchmove', onTouchMove, {passive: false})
+    el.addEventListener('touchend', onTouchEnd, {passive: true})
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart)
+      el.removeEventListener('touchmove', onTouchMove)
+      el.removeEventListener('touchend', onTouchEnd)
+    }
   }, [next, prev])
 
   if (!slides.length) return null
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-black">
-      {/* ── Slides ──────────────────────────────────────────────────── */}
+    <div ref={containerRef} className="relative h-screen w-full overflow-hidden bg-black">
+      {/* ── Slides ─────────────────────────────────────────────────────── */}
       {slides.map((slide, i) => {
         const isActive = i === active
         const isOut    = i === outgoing
@@ -154,9 +200,9 @@ export function HeroSlideshow({slides}: {slides: Slide[]}) {
         )
       })}
 
-      {/* ── Up / Down arrows ─────────────────────────────────────────── */}
+      {/* ── Up / Down arrows (desktop only) ────────────────────────────── */}
       {slides.length > 1 && (
-        <>
+        <div className="hidden md:block">
           <button
             onClick={prev}
             className="absolute right-5 top-1/2 -translate-y-8 z-10 p-2 text-white/35 hover:text-white transition-colors duration-300"
@@ -171,12 +217,15 @@ export function HeroSlideshow({slides}: {slides: Slide[]}) {
           >
             <ChevronDown className="w-6 h-6" />
           </button>
-        </>
+        </div>
       )}
 
-      {/* ── Vertical dot indicators ──────────────────────────────────── */}
+      {/* ── Dot indicators ──────────────────────────────────────────────── */}
       {slides.length > 1 && (
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 z-10 flex flex-col items-center gap-[6px]" style={{marginTop: '3rem'}}>
+        <div
+          className="absolute z-10 flex flex-col items-center gap-[6px]"
+          style={{right: '1.5rem', top: '50%', transform: 'translateY(calc(-50% + 3rem))'}}
+        >
           {slides.map((_, i) => (
             <button
               key={i}
@@ -192,7 +241,16 @@ export function HeroSlideshow({slides}: {slides: Slide[]}) {
         </div>
       )}
 
-      {/* ── Counter ───────────────────────────────────────────────────── */}
+      {/* ── Swipe hint (mobile only, fades after first interaction) ─────── */}
+      {slides.length > 1 && (
+        <div className="md:hidden absolute bottom-16 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1 pointer-events-none select-none animate-[fadeout_3s_2s_ease-in_forwards]">
+          <ChevronUp className="w-4 h-4 text-white/30" />
+          <span className="text-[10px] tracking-widest uppercase text-white/25">Swipe</span>
+          <ChevronDown className="w-4 h-4 text-white/30" />
+        </div>
+      )}
+
+      {/* ── Counter ─────────────────────────────────────────────────────── */}
       {slides.length > 1 && (
         <div className="absolute bottom-7 right-8 md:right-10 z-10 text-[11px] text-white/30 tabular-nums tracking-widest select-none">
           {String(active + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}
