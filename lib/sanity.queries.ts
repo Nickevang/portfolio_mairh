@@ -160,7 +160,7 @@ export const siteSettingsQuery = /* groq */ `
 `
 
 export const projectsQuery = /* groq */ `
-  *[_type == "project" && mediaType != "video"] | order(publishedAt desc) {
+  *[_type == "project" && (mediaType != "video" || showOnWork == true)] | order(publishedAt desc) {
     _id,
     title,
     "slug": slug.current,

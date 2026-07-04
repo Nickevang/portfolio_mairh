@@ -62,6 +62,13 @@ export const project = defineType({
       hidden: ({document}) => document?.mediaType !== 'video',
     }),
     defineField({
+      name: 'showOnWork',
+      title: 'Show on Work page',
+      type: 'boolean',
+      description: 'Enable to make this video project appear in the Work listing.',
+      hidden: ({document}) => document?.mediaType !== 'video',
+    }),
+    defineField({
       name: 'subprojects',
       title: 'Sub-projects',
       type: 'array',
