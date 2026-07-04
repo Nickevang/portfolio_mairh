@@ -4,6 +4,7 @@ import {muxInput} from 'sanity-plugin-mux-input'
 
 import {schemaTypes} from './sanity/schemas'
 import {MigrateToSectionsAction} from './sanity/actions/migrateToSections'
+import {ProjectPublishAction} from './sanity/actions/projectPublishAction'
 import {GalleryEditorView} from './sanity/components/GalleryEditor'
 import {GalleryEditorTool, GalleryIcon} from './sanity/tools/GalleryEditorTool'
 
@@ -49,7 +50,7 @@ export default defineConfig({
   document: {
     actions: (prev, context) =>
       context.schemaType === 'project'
-        ? [...prev, MigrateToSectionsAction]
+        ? [ProjectPublishAction, ...prev, MigrateToSectionsAction]
         : prev,
   },
 
