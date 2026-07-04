@@ -11,14 +11,12 @@ export function ProjectPublishAction({id, type}: Props) {
   const ops = useDocumentOperation(id, type)
   const publishOp = ops.publish as unknown as {execute: () => void; disabled: false | string}
 
-  const hasChanges = publishOp.disabled === false
-
   return {
-    label: hasChanges ? 'Publish' : 'Published',
-    disabled: !hasChanges,
-    tone: (hasChanges ? 'primary' : 'default') as 'primary' | 'default',
+    label: 'Publish',
+    disabled: false,
+    tone: 'primary' as const,
     onHandle: () => {
-      if (hasChanges) publishOp.execute()
+      publishOp.execute()
     },
   }
 }
